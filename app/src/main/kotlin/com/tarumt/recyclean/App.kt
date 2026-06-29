@@ -1,35 +1,27 @@
 package com.tarumt.recyclean
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import com.tarumt.recyclean.common.defaultFont
+import androidx.compose.runtime.rememberCoroutineScope
+import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.navigation.AppNavigator
+import com.tarumt.recyclean.navigation.LoginPageDestination
+import com.tarumt.recyclean.screen.HomeScreen
+import com.tarumt.recyclean.screen.LoginScreen
 
 @Composable
-@Preview
 fun App() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.Black)
-    ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                modifier = Modifier.background(Color.White), text = "Test", fontFamily = defaultFont
-            )
-        }
+    val scope = rememberCoroutineScope()
+    appState = AppState(scope)
+
+    MaterialTheme {
+        AppNavigator(appState.navigator, homeContent = {
+            HomeScreen()
+        }, destinationContent = { destination ->
+            when (destination) {
+                is LoginPageDestination -> LoginScreen()
+                else -> HomeScreen()
+            }
+        })
     }
 }
