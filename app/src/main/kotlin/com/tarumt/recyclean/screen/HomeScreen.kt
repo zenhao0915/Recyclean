@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +47,7 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
+import com.tarumt.recyclean.util.drawNavigator
 
 @Composable
 @Preview
@@ -280,7 +280,9 @@ fun HomeScreen() {
                                 fontWeight = FontWeight.SemiBold
                             )
                             VerticalDivider(
-                                modifier = Modifier.padding(horizontal = 8.dp).offset(x = 35.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .offset(x = 35.dp),
                                 thickness = 1.dp,
                                 color = Color.Gray
                             )
@@ -295,6 +297,12 @@ fun HomeScreen() {
                     }
                 }
             }
+
+            // Navigator
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) { drawNavigator() }
         }
     }
 }
