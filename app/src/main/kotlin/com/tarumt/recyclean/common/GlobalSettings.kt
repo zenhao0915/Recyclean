@@ -17,3 +17,4 @@ val defaultFontSize = 14.sp
 
 val creamColor = Color(0xFFFFFDD0)
 val vanillaColor = Color(0xFFF3E5AB)
+val orangeCreamColor = Color(0xFFFFAC71)
