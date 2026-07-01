@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -31,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +52,7 @@ import com.tarumt.recyclean.navigation.Navigations
 import kotlin.math.abs
 
 @Composable
+@Preview
 fun DrawNavigator() =
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.height(120.dp)) {
         Box(
@@ -61,14 +65,17 @@ fun DrawNavigator() =
                 )
         ) {
             Row(
-                modifier = Modifier.padding(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(30.dp, Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(Navigations.entries.size) { i ->
                     val isCenterElement = i == 2
                     val currentNav = Navigations.entries[i]
                     Column(
+                        modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -92,13 +99,16 @@ fun DrawNavigator() =
     }
 
 @Composable
-@Preview
 fun DrawResultBox(
-    topicText: String = "iPhone 67 Pro", productGrade: ProductGrade = ProductGrade.S
+    image: Painter = painterResource(R.drawable.ic_launcher_background),
+    topicText: String = "iPhone 67 Pro",
+    productGrade: ProductGrade = ProductGrade.S,
+    maxWidth: Int = 170,
+    maxHeight: Int = 250
 ) = Box(
     modifier = Modifier
-        .width(180.dp)
-        .height(250.dp)
+        .width(maxWidth.dp)
+        .height(maxHeight.dp)
         .background(color = Color.White.copy(alpha = 0.4f), shape = RoundedCornerShape(8.dp))
         .border(
             width = 0.5.dp, color = Color.Gray.copy(alpha = 0.75f), shape = RoundedCornerShape(8.dp)
@@ -114,7 +124,8 @@ fun DrawResultBox(
             modifier = Modifier
                 .width(160.dp)
                 .height(200.dp),
-            painter = painterResource(R.drawable.ic_launcher_background),
+            painter = image,
+            contentScale = ContentScale.Fit,
             contentDescription = null
         )
         // Grade
@@ -129,8 +140,7 @@ fun DrawResultBox(
                     .background(color = orangeCreamColor, shape = RoundedCornerShape(4.dp))
                     .border(
                         width = 0.5.dp, color = orangeCreamColor, shape = RoundedCornerShape(4.dp)
-                    ),
-                contentAlignment = Alignment.Center
+                    ), contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = productGrade.grade,

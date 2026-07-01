@@ -5,20 +5,23 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.Monitor
@@ -26,7 +29,6 @@ import androidx.compose.material.icons.filled.Motorcycle
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Recommend
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Tablet
 import androidx.compose.material.icons.filled.Wallet
@@ -50,6 +52,7 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.util.DrawNavigator
+import com.tarumt.recyclean.util.DrawResultBox
 
 @Composable
 @Preview
@@ -73,15 +76,20 @@ fun HomeScreen() {
             ("Camera" to Icons.Default.CameraAlt)
         )
     }
+    val scrollableState = rememberScrollState()
 
     // Search
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(4.dp)
+            .offset(y = 8.dp)
             .background(color = Color.White)
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxHeight(0.86f)
+                .verticalScroll(scrollableState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -100,15 +108,20 @@ fun HomeScreen() {
                         .clip(RoundedCornerShape(4.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(4.dp))
                 ) {
-                    Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                             text = "Enter To Search..",
                             fontSize = defaultFontSize,
                             fontFamily = defaultFont
                         )
-                        Spacer(Modifier.width(96.dp))
-                        VerticalDivider(modifier = Modifier.padding(vertical = 6.dp), thickness = 2.dp)
+                        Spacer(Modifier.width(94.dp))
+                        VerticalDivider(
+                            modifier = Modifier.padding(vertical = 6.dp), thickness = 2.dp
+                        )
                         Text(
                             modifier = Modifier.padding(horizontal = 6.dp),
                             text = "Search",
@@ -286,7 +299,7 @@ fun HomeScreen() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "FUCK U",
+                                text = "Test",
                                 fontFamily = defaultFont,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -311,16 +324,26 @@ fun HomeScreen() {
             }
 
             // Recommend Result
-            Box(modifier = Modifier.width(180.dp).background(color = Color.White)) {
-
+            FlowRow(
+                modifier = Modifier.padding(vertical = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+                maxItemsInEachRow = 2
+            ) {
+                repeat(3) {
+                    DrawResultBox()
+                }
             }
-
-            // Navigator
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.Center
-            ) { DrawNavigator() }
         }
     }
+
+    // Navigator
+    Row(
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(12.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.Center
+    ) { DrawNavigator() }
 }
