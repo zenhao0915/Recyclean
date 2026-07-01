@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.Monitor
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.Recommend
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Tablet
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -47,7 +49,7 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
-import com.tarumt.recyclean.util.drawNavigator
+import com.tarumt.recyclean.util.DrawNavigator
 
 @Composable
 @Preview
@@ -98,12 +100,22 @@ fun HomeScreen() {
                         .clip(RoundedCornerShape(4.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(4.dp))
                 ) {
-                    Text(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                        text = "Enter To Search..",
-                        fontSize = defaultFontSize,
-                        fontFamily = defaultFont
-                    )
+                    Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                            text = "Enter To Search..",
+                            fontSize = defaultFontSize,
+                            fontFamily = defaultFont
+                        )
+                        Spacer(Modifier.width(96.dp))
+                        VerticalDivider(modifier = Modifier.padding(vertical = 6.dp), thickness = 2.dp)
+                        Text(
+                            modifier = Modifier.padding(horizontal = 6.dp),
+                            text = "Search",
+                            fontSize = defaultFontSize,
+                            fontFamily = defaultBoldFont
+                        )
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -114,17 +126,17 @@ fun HomeScreen() {
                             .clip(RoundedCornerShape(4.dp))
                             .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
                     ) {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Chat,
+                            contentDescription = "ChatButton"
+                        )
                     }
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "ChatButton"
-                        )
+                        Icon(imageVector = Icons.Default.Wallet, contentDescription = "Wallet")
                     }
                 }
             }
@@ -298,11 +310,17 @@ fun HomeScreen() {
                 }
             }
 
+            // Recommend Result
+            Box(modifier = Modifier.width(180.dp).background(color = Color.White)) {
+
+            }
+
             // Navigator
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center
-            ) { drawNavigator() }
+            ) { DrawNavigator() }
         }
     }
 }
