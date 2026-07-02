@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.util
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -9,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,8 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -42,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.defaultBoldFont
@@ -50,6 +56,56 @@ import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.navigation.Navigations
 import kotlin.math.abs
+
+
+@Composable
+fun GlassBox(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(24.dp),
+    blurRadius: Dp = 40.dp,
+    borderWidth: Dp = 1.dp,
+    isDarkTheme: Boolean = false,
+    contentAlignment: Alignment = Alignment.Center,
+    content: @Composable BoxScope.() -> Unit
+) {
+    val baseGlassColors = if (isDarkTheme) {
+        Color(0x331A1A1A)
+    } else {
+        Color(0xCCD7D7D7)
+    }
+
+    val borderBrush = Brush.verticalGradient(
+        colors = if (isDarkTheme) {
+            listOf(
+                Color.White.copy(alpha = 0.18f),
+                Color.White.copy(alpha = 0.02f),
+                Color.Black.copy(alpha = 0.35f)
+            )
+        } else {
+            listOf(
+                Color.White.copy(alpha = 0.65f),
+                Color.White.copy(alpha = 0.20f),
+                Color.White.copy(alpha = 0.05f)
+            )
+        }
+    )
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .border(width = borderWidth, brush = borderBrush, shape = shape),
+        contentAlignment = contentAlignment
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .blur(blurRadius)
+                .background(color = baseGlassColors)
+        )
+
+        Box { content() }
+    }
+}
 
 @Composable
 @Preview
@@ -72,7 +128,7 @@ fun DrawNavigator() =
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(Navigations.entries.size) { i ->
-                    val isCenterElement = i == 2
+                    val isCenterElement = i == (Navigations.entries.size) / 2
                     val currentNav = Navigations.entries[i]
                     Column(
                         modifier = Modifier.weight(1f),
@@ -81,13 +137,13 @@ fun DrawNavigator() =
                     ) {
                         Icon(
                             modifier = Modifier
-                                .offset(y = if (isCenterElement) (-25).dp else 0.dp)
+                                .offset(y = if (isCenterElement) (-28).dp else 0.dp)
                                 .size(if (isCenterElement) 36.dp else 24.dp),
                             imageVector = currentNav.icons,
                             contentDescription = currentNav.name
                         )
                         Text(
-                            modifier = Modifier.offset(y = if (isCenterElement) (-25).dp else 0.dp),
+                            modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
                             text = currentNav.name,
                             fontFamily = defaultFont,
                             fontSize = defaultFontSize
@@ -163,6 +219,7 @@ fun DrawResultBox(
     }
 }
 
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun GlassLiquidSwitch(
     checked: Boolean, onCheckedChange: (Boolean) -> Unit, scale: Float = 1.0f
@@ -178,7 +235,6 @@ fun GlassLiquidSwitch(
     var currentTrackingOffsetPx by remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
 
-    val offsetOffDp = padding
     val offsetOnDp = trackWidth - padding - (if (isPressed) pressedThumbWidth else normalThumbSize)
 
     val thumbWidth by animateDpAsState(
@@ -207,7 +263,7 @@ fun GlassLiquidSwitch(
             .background(backgroundColor)
             .border(1.dp, borderColor, CircleShape)
             .pointerInput(checked, scale) {
-                val minOffsetPx = density.run { offsetOffDp.toPx() }
+                val minOffsetPx = density.run { padding.toPx() }
                 val normalMaxOffsetPx =
                     density.run { (trackWidth - padding - normalThumbSize).toPx() }
                 val swipeThresholdPx = 15f * scale

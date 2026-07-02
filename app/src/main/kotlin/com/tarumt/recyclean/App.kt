@@ -12,11 +12,10 @@ import com.tarumt.recyclean.screen.LoginScreen
 @Composable
 fun App() {
     val scope = rememberCoroutineScope()
-    appState = AppState(scope)
 
     MaterialTheme {
         AppNavigator(appState.navigator, homeContent = {
-            HomeScreen()
+            LoginScreen()
         }, destinationContent = { destination ->
             when (destination) {
                 is LoginPageDestination -> LoginScreen()

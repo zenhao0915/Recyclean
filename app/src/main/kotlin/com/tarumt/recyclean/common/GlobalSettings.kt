@@ -9,7 +9,7 @@ import com.tarumt.recyclean.AppState
 import com.tarumt.recyclean.R
 
 const val appTitle = "Recyclean"
-lateinit var appState: AppState
+var appState = AppState()
 
 val defaultFont = FontFamily(Font(R.font.opensans_regular, FontWeight.Normal))
 val defaultBoldFont = FontFamily(Font(R.font.opensans_bold, FontWeight.Bold))
@@ -18,3 +18,5 @@ val defaultFontSize = 14.sp
 val creamColor = Color(0xFFFFFDD0)
 val vanillaColor = Color(0xFFF3E5AB)
 val orangeCreamColor = Color(0xFFFFAC71)
+val lightBlueColor = Color(0xFFADD8E6)
+val skyBlueColor = Color(0xFF466EF2)
