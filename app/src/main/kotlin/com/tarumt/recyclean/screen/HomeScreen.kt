@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +47,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tarumt.recyclean.AppState
+import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.creamColor
 import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
+import com.tarumt.recyclean.navigation.LoginPageDestination
+import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawNavigator
 import com.tarumt.recyclean.util.DrawResultBox
 
@@ -82,12 +87,11 @@ fun HomeScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(4.dp)
-            .offset(y = 8.dp)
             .background(color = Color.White)
     ) {
         Column(
             modifier = Modifier
+                .offset(y = 14.dp)
                 .fillMaxHeight(0.86f)
                 .verticalScroll(scrollableState),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -100,10 +104,14 @@ fun HomeScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Home, contentDescription = "Home")
+                Icon(
+                    modifier = Modifier.navReveal(appState.navigator, LoginPageDestination),
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Home"
+                )
                 Box(
                     modifier = Modifier
-                        .width(280.dp)
+                        .width(290.dp)
                         .height(25.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(4.dp))
@@ -113,17 +121,19 @@ fun HomeScreen() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 6.dp),
                             text = "Enter To Search..",
                             fontSize = defaultFontSize,
                             fontFamily = defaultFont
                         )
-                        Spacer(Modifier.width(94.dp))
+                        Spacer(Modifier.width(90.dp))
                         VerticalDivider(
                             modifier = Modifier.padding(vertical = 6.dp), thickness = 2.dp
                         )
                         Text(
-                            modifier = Modifier.padding(horizontal = 6.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .offset(x = 4.dp),
                             text = "Search",
                             fontSize = defaultFontSize,
                             fontFamily = defaultBoldFont
@@ -216,37 +226,16 @@ fun HomeScreen() {
                     modifier = Modifier.padding(8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(
-                            40.dp, Alignment.CenterHorizontally
-                        ), verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(goodsList.size.coerceAtMost(4)) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = goodsList.values.elementAt(it),
-                                    contentDescription = ""
-                                )
-                                Text(
-                                    text = goodsList.keys.elementAt(it),
-                                    fontSize = defaultFontSize,
-                                    fontFamily = defaultFont
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            40.dp, Alignment.CenterHorizontally
-                        ), verticalAlignment = Alignment.CenterVertically
+                            24.dp, Alignment.CenterHorizontally
+                        ), verticalArrangement = Arrangement.spacedBy(
+                            12.dp, Alignment.CenterVertically
+                        ), itemVerticalAlignment = Alignment.CenterVertically, maxItemsInEachRow = 4
                     ) {
                         repeat(goodsList.size) {
-                            if (it < 4) return@repeat
                             Column(
+                                modifier = Modifier.width(64.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
@@ -257,7 +246,8 @@ fun HomeScreen() {
                                 Text(
                                     text = goodsList.keys.elementAt(it),
                                     fontSize = defaultFontSize,
-                                    fontFamily = defaultFont
+                                    fontFamily = defaultFont,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -272,8 +262,8 @@ fun HomeScreen() {
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(60.dp)
-                    .border(0.5.dp, Color.Red, RoundedCornerShape(6.dp))
-                    .background(Color.Red.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, Color.Red, RoundedCornerShape(12.dp))
+                    .background(Color.Red.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -289,7 +279,7 @@ fun HomeScreen() {
                     Box(
                         contentAlignment = Alignment.CenterStart,
                         modifier = Modifier
-                            .width(200.dp)
+                            .width(210.dp)
                             .height(40.dp)
                             .background(Color.White, RoundedCornerShape(8.dp))
                             .offset(x = 15.dp)
@@ -306,13 +296,11 @@ fun HomeScreen() {
                             )
                             VerticalDivider(
                                 modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .offset(x = 35.dp),
-                                thickness = 1.dp,
-                                color = Color.Gray
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .offset(x = 60.dp), thickness = 1.dp, color = Color.Gray
                             )
                             Text(
-                                modifier = Modifier.offset(x = 32.dp),
+                                modifier = Modifier.offset(x = 60.dp),
                                 text = "Redeem",
                                 fontFamily = defaultFont,
                                 fontSize = 16.sp,
@@ -327,7 +315,7 @@ fun HomeScreen() {
             FlowRow(
                 modifier = Modifier.padding(vertical = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
                 itemVerticalAlignment = Alignment.CenterVertically,
                 maxItemsInEachRow = 2
             ) {
