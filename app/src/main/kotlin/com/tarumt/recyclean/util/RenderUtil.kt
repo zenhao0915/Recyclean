@@ -4,13 +4,17 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,9 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,12 +56,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.R
+import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.navigation.Navigations
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -71,7 +79,7 @@ fun GlassBox(
     val baseGlassColors = if (isDarkTheme) {
         Color(0x331A1A1A)
     } else {
-        Color(0xCCD7D7D7)
+        Color(0xB3D7D7D7)
     }
 
     val borderBrush = Brush.verticalGradient(
@@ -107,6 +115,7 @@ fun GlassBox(
     }
 }
 
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 @Preview
 fun DrawNavigator() =
@@ -115,39 +124,182 @@ fun DrawNavigator() =
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .padding(4.dp)
-                .background(color = Color.Transparent, shape = RoundedCornerShape(30.dp))
+                .background(color = Color.Transparent, shape = CircleShape)
                 .border(
-                    width = 0.5.dp, color = Color.Gray.copy(0.4f), shape = RoundedCornerShape(30.dp)
+                    width = 0.5.dp, color = Color.Gray.copy(0.4f), shape = CircleShape
                 )
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 10.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart
             ) {
-                repeat(Navigations.entries.size) { i ->
-                    val isCenterElement = i == (Navigations.entries.size) / 2
-                    val currentNav = Navigations.entries[i]
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                val density = LocalDensity.current
+                val tabCount = Navigations.entries.size
+                val selectedIndex =
+                    Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
+                val tabWidth = maxWidth / tabCount
+
+                var isDragging by remember { mutableStateOf(false) }
+                var dragOffsetPx by remember { mutableFloatStateOf(0f) }
+
+                val tabWidthPx = density.run { tabWidth.toPx() }
+                val maxOffsetPx = tabWidthPx * (tabCount - 1)
+                val snappedOffsetDp = if (selectedIndex >= 0) tabWidth * selectedIndex else 0.dp
+                val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
+
+                val targetOffsetDp = if (isDragging) {
+                    density.run { dragOffsetPx.toDp() }
+                } else {
+                    snappedOffsetDp
+                }
+                val animatedPillOffset by animateDpAsState(
+                    targetValue = targetOffsetDp,
+                    animationSpec = if (isDragging) snap() else spring(
+                        dampingRatio = 0.6f,
+                        stiffness = 800f
+                    ),
+                    label = "SlidingPillOffset"
+                )
+
+                val currentEstimatedIndex = if (isDragging) {
+                    (dragOffsetPx / tabWidthPx).roundToInt().coerceIn(0, tabCount - 1)
+                } else {
+                    selectedIndex
+                }
+                val isOverCenter = currentEstimatedIndex == tabCount / 2
+
+                val pillAlpha by animateFloatAsState(
+                    targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
+                    animationSpec = spring(dampingRatio = 0.65f),
+                    label = "PillAlpha"
+                )
+
+                val modifierWithGestures =
+                    Modifier
+                        .fillMaxWidth()
+                        .pointerInput(tabCount, selectedIndex, snappedOffsetPx) {
+                            val swipeThresholdPx = 10f
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val down = awaitPointerEvent(PointerEventPass.Main)
+                                    val downChange = down.changes.firstOrNull()?.takeIf { it.pressed } ?: continue
+
+                                    val startX = downChange.position.x
+                                    val pointerId = downChange.id
+                                    var hasMoved = false
+
+                                    dragOffsetPx = snappedOffsetPx
+
+                                    while (true) {
+                                        val nextEvent = awaitPointerEvent(PointerEventPass.Main)
+                                        val change =
+                                            nextEvent.changes.firstOrNull { it.id == pointerId }
+                                        if (change == null || change.isConsumed) {
+                                            isDragging = false
+                                            break
+                                        }
+
+                                        if (change.pressed) {
+                                            val deltaX = change.position.x - startX
+                                            if (!hasMoved && abs(deltaX) > swipeThresholdPx) {
+                                                isDragging = true
+                                                hasMoved = true
+                                            }
+
+                                            if (isDragging) {
+                                                dragOffsetPx = (snappedOffsetPx + deltaX).coerceIn(
+                                                    0f, maxOffsetPx
+                                                )
+                                                change.consume()
+                                            }
+                                        } else {
+                                            if (isDragging) {
+                                                isDragging = false
+                                                val targetIndex =
+                                                    (dragOffsetPx / tabWidthPx).roundToInt()
+                                                        .coerceIn(0, tabCount - 1)
+                                                val targetNav = Navigations.entries[targetIndex]
+
+                                                if (targetNav.navDestination != appState.navigator.current) {
+                                                    appState.navigator.navigateTo(
+                                                        targetNav.navDestination, Offset.Zero
+                                                    )
+                                                }
+                                            } else {
+                                                val clickIndex = (startX / tabWidthPx).toInt()
+                                                    .coerceIn(0, tabCount - 1)
+                                                val targetNav = Navigations.entries[clickIndex]
+
+                                                if (targetNav.navDestination != appState.navigator.current) {
+                                                    appState.navigator.navigateTo(
+                                                        targetNav.navDestination, Offset.Zero
+                                                    )
+                                                }
+                                            }
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                Box(
+                    modifier = modifierWithGestures, contentAlignment = Alignment.CenterStart
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .offset(x = animatedPillOffset)
+                            .width(tabWidth)
+                            .height(56.dp)
+                            .graphicsLayer { alpha = pillAlpha },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
+                        Box(
                             modifier = Modifier
-                                .offset(y = if (isCenterElement) (-28).dp else 0.dp)
-                                .size(if (isCenterElement) 36.dp else 24.dp),
-                            imageVector = currentNav.icons,
-                            contentDescription = currentNav.name
+                                .width(68.dp)
+                                .height(55.dp)
+                                .background(
+                                    color = Color(0xFFFF3B30).copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
                         )
-                        Text(
-                            modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
-                            text = currentNav.name,
-                            fontFamily = defaultFont,
-                            fontSize = defaultFontSize
-                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(tabCount) { i ->
+                            val isCenterElement = i == tabCount / 2
+                            val currentNav = Navigations.entries[i]
+                            val isSelected = currentNav.navDestination == appState.navigator.current
+                            val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    modifier = Modifier
+                                        .offset(y = if (isCenterElement) (-28).dp else 0.dp)
+                                        .size(if (isCenterElement) 36.dp else 24.dp),
+                                    imageVector = currentNav.icons,
+                                    contentDescription = currentNav.name,
+                                    tint = itemColor
+                                )
+                                Text(
+                                    modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
+                                    text = currentNav.name,
+                                    fontFamily = defaultFont,
+                                    fontSize = defaultFontSize,
+                                    color = itemColor,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -234,8 +386,6 @@ fun GlassLiquidSwitch(
 
     var currentTrackingOffsetPx by remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-
-    val offsetOnDp = trackWidth - padding - (if (isPressed) pressedThumbWidth else normalThumbSize)
 
     val thumbWidth by animateDpAsState(
         targetValue = if (isPressed) pressedThumbWidth else normalThumbSize,
