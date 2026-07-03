@@ -10,11 +10,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 data object LoginPageDestination : NavDestination()
 data object HomePageDestination : NavDestination()
+data object ServePageDestination : NavDestination()
+data object AddSellPageDestination : NavDestination()
+data object FavPageDestination : NavDestination()
+data object ProfilePageDestination : NavDestination()
 
-enum class Navigations(val icons: ImageVector) {
-    Home(Icons.Default.Home),
-    Serve(Icons.Default.RateReview),
-    AddSell(Icons.Default.AddCircle),
-    Favourite(Icons.Default.FolderSpecial),
-    Profile(Icons.Default.Person)
+enum class Navigations(val icons: ImageVector, val navDestination: NavDestination) {
+    Home(Icons.Default.Home, HomePageDestination),
+    Serve(Icons.Default.RateReview, ServePageDestination),
+    AddSell(Icons.Default.AddCircle, AddSellPageDestination),
+    Favourite(Icons.Default.FolderSpecial, FavPageDestination),
+    Profile(Icons.Default.Person, ProfilePageDestination)
 }
