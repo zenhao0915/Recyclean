@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -117,7 +116,6 @@ fun GlassBox(
 
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
-@Preview
 fun DrawNavigator() =
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.height(120.dp)) {
         Box(
@@ -154,8 +152,7 @@ fun DrawNavigator() =
                 val animatedPillOffset by animateDpAsState(
                     targetValue = targetOffsetDp,
                     animationSpec = if (isDragging) snap() else spring(
-                        dampingRatio = 0.6f,
-                        stiffness = 800f
+                        dampingRatio = 0.6f, stiffness = 800f
                     ),
                     label = "SlidingPillOffset"
                 )
@@ -181,7 +178,9 @@ fun DrawNavigator() =
                             awaitPointerEventScope {
                                 while (true) {
                                     val down = awaitPointerEvent(PointerEventPass.Main)
-                                    val downChange = down.changes.firstOrNull()?.takeIf { it.pressed } ?: continue
+                                    val downChange =
+                                        down.changes.firstOrNull()?.takeIf { it.pressed }
+                                            ?: continue
 
                                     val startX = downChange.position.x
                                     val pointerId = downChange.id
@@ -307,10 +306,11 @@ fun DrawNavigator() =
     }
 
 @Composable
+@Preview
 fun DrawResultBox(
     image: Painter = painterResource(R.drawable.ic_launcher_background),
     topicText: String = "iPhone 67 Pro",
-    productGrade: ProductGrade = ProductGrade.S,
+    sellerGrade: SellerGrade = SellerGrade.S,
     maxWidth: Int = 170,
     maxHeight: Int = 250
 ) = Box(
@@ -351,7 +351,7 @@ fun DrawResultBox(
                     ), contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = productGrade.grade,
+                    text = sellerGrade.grade,
                     fontFamily = defaultBoldFont,
                     fontSize = defaultFontSize,
                     textAlign = TextAlign.Center
