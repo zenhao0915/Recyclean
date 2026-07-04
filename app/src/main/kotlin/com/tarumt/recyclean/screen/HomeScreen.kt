@@ -59,7 +59,7 @@ import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
-import com.tarumt.recyclean.util.Sellers
+import com.tarumt.recyclean.util.data.Sellers
 
 @Composable
 @Preview
@@ -159,31 +159,6 @@ fun HomeScreen() {
                 }
             }
 
-            // My Device
-            Spacer(Modifier.height(4.dp))
-            GlassBox(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(60.dp)
-                    .border(0.5.dp, color = vanillaColor, CircleShape)
-                    .background(color = Color.Transparent, CircleShape)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.logo),
-                        contentDescription = null,
-                        contentScale = ContentScale.Inside,
-                        modifier = Modifier.scale(0.8f)
-                    )
-                    Text(text = "My Device")
-                }
-            }
-
-            Spacer(Modifier.height(15.dp))
             Box(
                 modifier = Modifier
                     .height(30.dp)
@@ -235,6 +210,46 @@ fun HomeScreen() {
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+
+            // My Device
+            Spacer(Modifier.height(15.dp))
+            GlassBox(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .height(60.dp)
+                    .border(1.dp, color = vanillaColor, CircleShape)
+                    .background(color = Color.Transparent, CircleShape)
+                , borderWidth = 1.dp
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.logo),
+                        contentDescription = null,
+                        contentScale = ContentScale.Inside,
+                        modifier = Modifier.scale(0.8f)
+                    )
+                    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "My Device",
+                            fontFamily = defaultBoldFont,
+                            fontSize = defaultFontSize
+                        )
+                        Text(
+                            text = "RM 3770 (Estimated)",
+                            fontFamily = defaultFont,
+                            fontSize = defaultFontSize
+                        )
+                    }
+                    GlassBox(modifier = Modifier, isDarkTheme = true, contentAlignment = Alignment.CenterEnd) {
+                        Text(modifier = Modifier.padding(4.dp), text = "Quote?", fontSize = 18.sp)
                     }
                 }
             }
