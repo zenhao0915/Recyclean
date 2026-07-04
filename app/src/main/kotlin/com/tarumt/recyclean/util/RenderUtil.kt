@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
@@ -61,6 +62,7 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.navigation.Navigations
+import com.tarumt.recyclean.util.data.Grade
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -310,7 +312,7 @@ fun DrawNavigator() =
 fun DrawResultBox(
     image: Painter = painterResource(R.drawable.ic_launcher_background),
     topicText: String = "iPhone 67 Pro",
-    sellerGrade: SellerGrade = SellerGrade.S,
+    sellerGrade: Grade = Grade.S,
     maxWidth: Int = 170,
     maxHeight: Int = 250
 ) = Box(
@@ -341,22 +343,7 @@ fun DrawResultBox(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .width(24.dp)
-                    .height(24.dp)
-                    .background(color = orangeCreamColor, shape = RoundedCornerShape(4.dp))
-                    .border(
-                        width = 0.5.dp, color = orangeCreamColor, shape = RoundedCornerShape(4.dp)
-                    ), contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = sellerGrade.grade,
-                    fontFamily = defaultBoldFont,
-                    fontSize = defaultFontSize,
-                    textAlign = TextAlign.Center
-                )
-            }
+            DrawGradeBox(sellerGrade)
 
             Spacer(Modifier.width(6.dp))
             Text(
@@ -368,6 +355,26 @@ fun DrawResultBox(
                 overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
+
+@Composable
+fun DrawGradeBox(grade: Grade, size: Dp = 24.dp, fontSize: TextUnit = defaultFontSize) {
+    Box(
+        modifier = Modifier
+            .width(size)
+            .height(size)
+            .background(color = orangeCreamColor, shape = RoundedCornerShape(6.dp))
+            .border(
+                width = 0.5.dp, color = orangeCreamColor, shape = RoundedCornerShape(6.dp)
+            ), contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = grade.grade,
+            fontFamily = defaultBoldFont,
+            fontSize = fontSize,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
