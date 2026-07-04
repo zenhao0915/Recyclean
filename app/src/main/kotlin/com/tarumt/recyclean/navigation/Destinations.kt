@@ -12,13 +12,13 @@ data object LoginPageDestination : NavDestination()
 data object HomePageDestination : NavDestination()
 data object ServePageDestination : NavDestination()
 data object AddSellPageDestination : NavDestination()
-data object FavPageDestination : NavDestination()
+data object DataPageDestination : NavDestination()
 data object ProfilePageDestination : NavDestination()
 
 enum class Navigations(val icons: ImageVector, val navDestination: NavDestination) {
     Home(Icons.Default.Home, HomePageDestination),
     Serve(Icons.Default.RateReview, ServePageDestination),
     AddSell(Icons.Default.AddCircle, AddSellPageDestination),
-    Favourite(Icons.Default.FolderSpecial, FavPageDestination),
+    Data(Icons.Default.FolderSpecial, DataPageDestination),
     Profile(Icons.Default.Person, ProfilePageDestination)
 }
