@@ -8,17 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Settings
@@ -42,132 +39,118 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.util.DrawGradeBox
+import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.data.Grade
 import com.tarumt.recyclean.util.data.UserTier
 
 @Composable
 @Preview
-fun ProfileScreen() = Box(
-    modifier = Modifier
-        .fillMaxSize()
-        .background(color = Color.White),
-    contentAlignment = Alignment.TopCenter
-) {
-    val scrollableState = rememberScrollState()
-    Column(
-        modifier = Modifier
-            .offset(y = 14.dp)
-            .fillMaxHeight(0.86f)
-            .fillMaxWidth(0.9f)
-            .verticalScroll(scrollableState),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+fun ProfileScreen() = DrawTemplate {
+    Row(
+        modifier = Modifier.padding(bottom = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.Top
     ) {
-        Row(
-            modifier = Modifier.padding(top = 48.dp, bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.Top
+        Box(
+            modifier = Modifier
+                .border(width = 1.5.dp, color = Color.Black, shape = CircleShape)
+                .padding(4.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .border(width = 1.5.dp, color = Color.Black, shape = CircleShape)
-                    .padding(4.dp)
+            Image(
+                modifier = Modifier.size(80.dp),
+                painter = painterResource(R.drawable.profile),
+                contentDescription = null
+            )
+        }
+
+        Text(
+            modifier = Modifier.offset(y = 12.dp),
+            text = "Ling Yue",
+            fontFamily = defaultBoldFont,
+            fontSize = 24.sp
+        )
+
+        Icon(
+            modifier = Modifier.offset(y = 16.dp),
+            imageVector = Icons.AutoMirrored.Filled.Chat,
+            contentDescription = null
+        )
+        Icon(
+            modifier = Modifier.offset(y = 16.dp),
+            imageVector = Icons.Default.Settings,
+            contentDescription = null
+        )
+    }
+
+    HorizontalDivider(modifier = Modifier.scale(1.25f), thickness = 1.5.dp, color = Color.Black)
+
+    // User Grade
+    Spacer(Modifier.height(36.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .background(color = creamColor, shape = RoundedCornerShape(12.dp))
+            .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp)),
+        //contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Image(
-                    modifier = Modifier.size(80.dp),
-                    painter = painterResource(R.drawable.profile),
-                    contentDescription = null
+                Text(
+                    modifier = Modifier.offset(y = 10.dp),
+                    text = "Welcome, ${appState.currentUser?.userName} !",
+                    fontFamily = defaultBoldFont,
+                    fontSize = 18.sp
                 )
             }
 
-            Text(
-                modifier = Modifier.offset(y = 12.dp),
-                text = "Ling Yue",
-                fontFamily = defaultBoldFont,
-                fontSize = 24.sp
-            )
-
-            Icon(
-                modifier = Modifier.offset(y = 16.dp),
-                imageVector = Icons.AutoMirrored.Filled.Chat,
-                contentDescription = null
-            )
-            Icon(
-                modifier = Modifier.offset(y = 16.dp),
-                imageVector = Icons.Default.Settings,
-                contentDescription = null
-            )
-        }
-
-        HorizontalDivider(modifier = Modifier.scale(1.25f), thickness = 1.5.dp, color = Color.Black)
-
-        // User Grade
-        Spacer(Modifier.height(36.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(color = creamColor, shape = RoundedCornerShape(12.dp))
-                .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp)),
-            //contentAlignment = Alignment.TopCenter
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    22.dp, Alignment.CenterHorizontally
+                )
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.Center
+                DrawGradeBox(Grade.S_Plus, size = 48.dp, fontSize = 24.sp)
+
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val currentTier = UserTier.Gold
                     Text(
-                        modifier = Modifier.offset(y = 10.dp),
-                        text = "Welcome, ${appState.currentUser?.userName} !",
-                        fontFamily = defaultBoldFont,
-                        fontSize = 18.sp
+                        text = "Current Tier Status",
+                        fontFamily = defaultFont,
+                        fontSize = defaultFontSize
                     )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(
-                        22.dp,
-                        Alignment.CenterHorizontally
+                    Text(
+                        text = currentTier.name,
+                        fontFamily = defaultFont,
+                        fontSize = 28.sp,
+                        color = currentTier.color
                     )
-                ) {
-                    DrawGradeBox(Grade.S_Plus, size = 48.dp, fontSize = 24.sp)
-
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val currentTier = UserTier.Gold
-                        Text(
-                            text = "Current Tier Status",
-                            fontFamily = defaultFont,
-                            fontSize = defaultFontSize
-                        )
-                        Text(
-                            text = currentTier.name,
-                            fontFamily = defaultFont,
-                            fontSize = 28.sp,
-                            color = currentTier.color
-                        )
-                    }
                 }
             }
         }
-
-        // Transaction History
-        Spacer(Modifier.height(30.dp))
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .border(width = 0.5.dp, color = Color.Black)) {
-            Text("No Result Currently")
-        }
-
-        DrawAdminProfile()
     }
+
+    // Transaction History
+    Spacer(Modifier.height(30.dp))
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(width = 0.5.dp, color = Color.Black)
+    ) {
+        Text("No Result Currently")
+    }
+
+    DrawAdminProfile()
 }
 
 @Composable
