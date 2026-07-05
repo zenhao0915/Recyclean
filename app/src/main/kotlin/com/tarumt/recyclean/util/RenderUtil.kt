@@ -17,14 +17,19 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +71,28 @@ import com.tarumt.recyclean.util.data.Grade
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+@Composable
+fun DrawTemplate(contentAlignment: Alignment = Alignment.TopCenter, value: @Composable () -> Unit) =
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White),
+        contentAlignment = contentAlignment
+    ) {
+        val scrollableState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .offset(y = 14.dp)
+                .fillMaxHeight(0.86f)
+                .fillMaxWidth(0.9f)
+                .padding(top = 24.dp, bottom = 24.dp)
+                .verticalScroll(scrollableState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            value.invoke()
+        }
+    }
 
 @Composable
 fun GlassBox(
@@ -340,18 +367,19 @@ fun DrawResultBox(
         )
         // Grade
         Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Top
         ) {
             DrawGradeBox(sellerGrade)
 
             Spacer(Modifier.width(6.dp))
             Text(
+                modifier = Modifier.widthIn(max = 120.dp),
                 text = topicText,
                 fontFamily = defaultFont,
                 fontSize = defaultFontSize,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
