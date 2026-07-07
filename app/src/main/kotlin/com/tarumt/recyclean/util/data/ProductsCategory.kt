@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.Tablet
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.tarumt.recyclean.R
@@ -29,9 +30,9 @@ enum class ProductsCategory(val icons: ImageVector, val devices: Array<AltDevice
         Icons.Default.Watch,
         arrayOf(AltDevices.AppleWatch7, AltDevices.GalaxyWatch4)
     ),
-    Microwave(
-        Icons.Default.Microwave,
-        arrayOf(AltDevices.PanasonicInverter, AltDevices.ToshibaSolo)
+    TV(
+        Icons.Default.Tv,
+        arrayOf(AltDevices.SamsungTV, AltDevices.SonyTV)
     ),
     Speaker(
         Icons.Default.Speaker,
@@ -67,8 +68,8 @@ enum class AltDevices(val deviceName: String, val icon: Int = R.drawable.ic_laun
     GalaxyWatch4("Samsung Galaxy Watch 4"),
 
     // --- Microwave ---
-    PanasonicInverter("Panasonic Inverter"),
-    ToshibaSolo("Toshiba Solo Microwave"),
+    SamsungTV("Samsung 65inch TV"),
+    SonyTV("Sony 55inch Smart TV"),
 
     // --- Speaker ---
     JBLFlip5("JBL Flip 5"),

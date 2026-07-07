@@ -30,7 +30,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.creamColor
@@ -53,6 +57,7 @@ import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
+import com.tarumt.recyclean.util.data.Grade
 import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
 
@@ -60,6 +65,8 @@ import com.tarumt.recyclean.util.data.Sellers
 @Preview
 fun HomeScreen() {
     val scrollableState = rememberScrollState()
+    var drawPopup by remember { mutableStateOf(false) }
+    var currentProductSelected by remember { mutableStateOf<ProductsCategory?>(null) }
 
     // Search
     Box(
@@ -177,6 +184,7 @@ fun HomeScreen() {
                     ) {
                         val goodsList = ProductsCategory.entries
                         repeat(goodsList.size) {
+                            val currentProduct = goodsList.elementAt(it)
                             Column(
                                 modifier = Modifier
                                     .width(64.dp)
@@ -185,17 +193,18 @@ fun HomeScreen() {
                                         indication = null,
                                         onClick = {
                                             /* Jump To Items Selection Here */
+                                            drawPopup = true
+                                            currentProductSelected = currentProduct
                                         }),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = goodsList.elementAt(it).icons,
-                                    contentDescription = ""
+                                    imageVector = currentProduct.icons, contentDescription = ""
                                 )
                                 Text(
-                                    text = goodsList.elementAt(it).name,
-                                    fontSize = 13.sp,
+                                    text = currentProduct.name,
+                                    fontSize = defaultFontSize,
                                     fontFamily = defaultFont,
                                     maxLines = 1
                                 )
@@ -214,7 +223,8 @@ fun HomeScreen() {
                     .fillMaxWidth(0.9f)
                     .height(60.dp)
                     .border(1.dp, color = vanillaColor, CircleShape)
-                    .background(color = Color.Transparent, CircleShape), borderWidth = 1.dp
+                    .background(color = Color.Transparent, CircleShape),
+                borderWidth = 1.dp
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
@@ -323,6 +333,35 @@ fun HomeScreen() {
                         sellerGrade = seller.gradeDetails,
                         image = painterResource(seller.sellerLogo)
                     )
+                }
+            }
+        }
+
+        if (drawPopup) {
+            currentProductSelected?.let {
+                Popup(
+                    alignment = Alignment.Center, onDismissRequest = {
+                        drawPopup = false
+                        currentProductSelected = null
+                    }) {
+                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f), isDarkTheme = true) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(
+                                24.dp, Alignment.CenterHorizontally
+                            )
+                        ) {
+                            it.devices.forEach { device ->
+                                DrawResultBox(
+                                    topicText = device.name,
+                                    sellerGrade = Grade.S,
+                                    image = painterResource(device.icon),
+                                    maxWidth = 80,
+                                    maxHeight = 130
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -359,8 +359,8 @@ fun DrawResultBox(
     ) {
         Image(
             modifier = Modifier
-                .width(160.dp)
-                .height(200.dp),
+                .width((maxWidth - 10).coerceAtLeast(50).dp)
+                .height((maxHeight - 50).coerceAtLeast(80).dp),
             painter = image,
             contentScale = ContentScale.Fit,
             contentDescription = null
