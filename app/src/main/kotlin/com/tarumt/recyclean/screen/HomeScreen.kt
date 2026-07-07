@@ -3,6 +3,8 @@ package com.tarumt.recyclean.screen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,16 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.Monitor
-import androidx.compose.material.icons.filled.Motorcycle
-import androidx.compose.material.icons.filled.PhoneIphone
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Tablet
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -59,23 +53,12 @@ import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
+import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
 
 @Composable
 @Preview
 fun HomeScreen() {
-    val goodsList = remember {
-        linkedMapOf(
-            ("Mobile" to Icons.Default.PhoneIphone),
-            ("Tablet" to Icons.Default.Tablet),
-            ("Laptop" to Icons.Default.Laptop),
-            ("Watch" to Icons.Default.Watch),
-            ("Bicycle" to Icons.Default.Motorcycle),
-            ("Bags" to Icons.Default.ShoppingBag),
-            ("Monitor" to Icons.Default.Monitor),
-            ("Camera" to Icons.Default.CameraAlt)
-        )
-    }
     val scrollableState = rememberScrollState()
 
     // Search
@@ -192,19 +175,27 @@ fun HomeScreen() {
                             12.dp, Alignment.CenterVertically
                         ), itemVerticalAlignment = Alignment.CenterVertically, maxItemsInEachRow = 4
                     ) {
+                        val goodsList = ProductsCategory.entries
                         repeat(goodsList.size) {
                             Column(
-                                modifier = Modifier.width(64.dp),
+                                modifier = Modifier
+                                    .width(64.dp)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = {
+                                            /* Jump To Items Selection Here */
+                                        }),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = goodsList.values.elementAt(it),
+                                    imageVector = goodsList.elementAt(it).icons,
                                     contentDescription = ""
                                 )
                                 Text(
-                                    text = goodsList.keys.elementAt(it),
-                                    fontSize = defaultFontSize,
+                                    text = goodsList.elementAt(it).name,
+                                    fontSize = 13.sp,
                                     fontFamily = defaultFont,
                                     maxLines = 1
                                 )
@@ -223,8 +214,7 @@ fun HomeScreen() {
                     .fillMaxWidth(0.9f)
                     .height(60.dp)
                     .border(1.dp, color = vanillaColor, CircleShape)
-                    .background(color = Color.Transparent, CircleShape)
-                , borderWidth = 1.dp
+                    .background(color = Color.Transparent, CircleShape), borderWidth = 1.dp
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
@@ -236,7 +226,10 @@ fun HomeScreen() {
                         contentScale = ContentScale.Inside,
                         modifier = Modifier.scale(0.8f)
                     )
-                    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
                             text = "My Device",
                             fontFamily = defaultBoldFont,
@@ -248,7 +241,11 @@ fun HomeScreen() {
                             fontSize = defaultFontSize
                         )
                     }
-                    GlassBox(modifier = Modifier, isDarkTheme = true, contentAlignment = Alignment.CenterEnd) {
+                    GlassBox(
+                        modifier = Modifier,
+                        isDarkTheme = true,
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
                         Text(modifier = Modifier.padding(4.dp), text = "Quote?", fontSize = 18.sp)
                     }
                 }
