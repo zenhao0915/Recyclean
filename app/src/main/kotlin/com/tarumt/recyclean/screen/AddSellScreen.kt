@@ -2,6 +2,7 @@ package com.tarumt.recyclean.screen
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
@@ -52,15 +53,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
+import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
 
-// 模拟零部件的数据结构
 data class SalvageablePart(
     val name: String,
     val estimatedPrice: Double,
@@ -73,12 +77,33 @@ data class SalvageablePart(
 fun AddSellScreen() = DrawTemplate {
     val coroutineScope = rememberCoroutineScope()
 
+    val geminiModel = remember {
+        GenerativeModel(
+            modelName = "gemini-3.5-flash",
+            apiKey = api_key
+        )
+    }
+    val baseAiPrompt = """
+        You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
+        Analyze the provided input (image or text) and identify the device.
+        List exactly 3 to 5 valuable, functional salvageable parts/components that can be extracted from this device to be sold to third-party repair shops.
+        Estimate a reasonable market recycling value for each part in Malaysian Ringgit (RM).
+        
+        CRITICAL REQUIREMENT: You must reply ONLY with a valid JSON array. Do NOT wrap it in ```json ... ``` blocks, do NOT write introductory or concluding text.
+        Format example:
+        [
+          {"name": "A15 Bionic Motherboard (Motherboard)", "price": 320.0},
+          {"name": "OLED Screen Panel (Screen)", "price": 180.5}
+        ]
+    """.trimIndent()
+
     var manualInput by remember { mutableStateOf("") }
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
     var showResult by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
-    var detectedDeviceName by remember { mutableStateOf("iPhone 13 Pro (Detected by AI)") }
+    var detectedDeviceName by remember { mutableStateOf("") }
     val partList = remember { mutableStateListOf<SalvageablePart>() }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -86,19 +111,43 @@ fun AddSellScreen() = DrawTemplate {
     ) { bitmap ->
         if (bitmap != null) {
             capturedBitmap = bitmap
+            errorMessage = ""
             coroutineScope.launch {
                 isAnalyzing = true
                 showResult = false
-                delay(2500.milliseconds)
-                isAnalyzing = false
 
-                // 模拟 AI 拆解出来的电子元件数据
-                partList.clear()
-                partList.add(SalvageablePart("A15 Bionic Motherboard (主板)", 350.0))
-                partList.add(SalvageablePart("OLED Super Retina Screen (屏幕)", 220.0))
-                partList.add(SalvageablePart("Triple Camera Module (三摄镜头)", 180.0))
-                partList.add(SalvageablePart("Original Li-ion Battery (原装锂电池)", 45.0))
-                showResult = true
+                try {
+                    val response = withContext(Dispatchers.IO) {
+                        geminiModel.generateContent(
+                            content {
+                                image(bitmap)
+                                text(baseAiPrompt)
+                            }
+                        )
+                    }
+
+                    val jsonResult = response.text ?: ""
+                    Log.d("GeminiAI", "Raw Response: $jsonResult")
+
+                    partList.clear()
+                    val jsonArray = JSONArray(jsonResult.trim())
+                    for (i in 0 until jsonArray.length()) {
+                        val obj = jsonArray.getJSONObject(i)
+                        partList.add(
+                            SalvageablePart(
+                                name = obj.getString("name"),
+                                estimatedPrice = obj.getDouble("price")
+                            )
+                        )
+                    }
+                    detectedDeviceName = "Detected Smart Device"
+                    showResult = true
+                } catch (e: Exception) {
+                    Log.e("GeminiAI", "Error calling API", e)
+                    errorMessage = "AI Analysis Failed: Please try again."
+                } finally {
+                    isAnalyzing = false
+                }
             }
         }
     }
@@ -161,7 +210,7 @@ fun AddSellScreen() = DrawTemplate {
                     )
                 }
             } ?: run {
-                GlassBox() {
+                GlassBox {
                     Button(
                         onClick = { cameraLauncher.launch() },
                         shape = RoundedCornerShape(12.dp)
@@ -204,24 +253,52 @@ fun AddSellScreen() = DrawTemplate {
         if (manualInput.isNotEmpty() && capturedBitmap == null) {
             Button(
                 onClick = {
+                    errorMessage = ""
                     coroutineScope.launch {
                         isAnalyzing = true
-                        delay(2000.milliseconds)
-                        isAnalyzing = false
-                        detectedDeviceName = manualInput
-                        partList.clear()
-                        partList.add(SalvageablePart("Main Logic Board (核心电路板)", 280.0))
-                        partList.add(SalvageablePart("Power Supply Unit (电源模块)", 90.0))
-                        partList.add(SalvageablePart("Cooling Fan & Heatsink (散热系统)", 40.0))
-                        showResult = true
+                        showResult = false
+                        try {
+                            val response = withContext(Dispatchers.IO) {
+                                geminiModel.generateContent(
+                                    "$baseAiPrompt\n\nUser Inputted Device Model: $manualInput"
+                                )
+                            }
+
+                            val jsonResult = response.text ?: ""
+                            Log.d("GeminiAI", "Raw Response: $jsonResult")
+
+                            partList.clear()
+                            val jsonArray = JSONArray(jsonResult.trim())
+                            for (i in 0 until jsonArray.length()) {
+                                val obj = jsonArray.getJSONObject(i)
+                                partList.add(
+                                    SalvageablePart(
+                                        name = obj.getString("name"),
+                                        estimatedPrice = obj.getDouble("price")
+                                    )
+                                )
+                            }
+                            detectedDeviceName = manualInput
+                            showResult = true
+                        } catch (e: Exception) {
+                            Log.e("GeminiAI", "Error calling API", e)
+                            errorMessage = "AI Parsing Failed: Check text input or connection."
+                        } finally {
+                            isAnalyzing = false
+                        }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 Text(text = "Analyze Text with AI", fontFamily = defaultFont)
             }
+        }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(text = errorMessage, color = Color.Red, fontSize = 13.sp, fontFamily = defaultFont)
         }
 
         AnimatedVisibility(visible = isAnalyzing) {
@@ -232,7 +309,7 @@ fun AddSellScreen() = DrawTemplate {
                 CircularProgressIndicator(color = greenCyanColor)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "AI is evaluating components...",
+                    text = "Thinking...",
                     fontFamily = defaultFont,
                     fontSize = 14.sp,
                     color = greenCyanColor
@@ -255,7 +332,7 @@ fun AddSellScreen() = DrawTemplate {
                     fontFamily = defaultFont,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF3B30) // 你的标志性苹果红高亮
+                    color = Color(0xFFFF3B30)
                 )
 
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
@@ -266,7 +343,6 @@ fun AddSellScreen() = DrawTemplate {
                     color = Color.Gray
                 )
 
-                // 循环渲染组件列表
                 partList.forEach { part ->
                     var checked by remember { mutableStateOf(part.isSelected) }
                     Row(
@@ -294,7 +370,6 @@ fun AddSellScreen() = DrawTemplate {
 
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                // 总估价计算
                 val totalPrice = partList.filter { it.isSelected }.sumOf { it.estimatedPrice }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -318,7 +393,6 @@ fun AddSellScreen() = DrawTemplate {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 最终提交按钮
                 Button(
                     onClick = { /* 提交到数据库，通知持牌商家竞价 */ },
                     colors = ButtonDefaults.buttonColors(containerColor = greenCyanColor),
@@ -334,7 +408,5 @@ fun AddSellScreen() = DrawTemplate {
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(100.dp)) // 给底部的浮动 Navigator 留出空位
     }
 }
