@@ -242,7 +242,7 @@ fun AddSellScreen() = DrawTemplate {
             onValueChange = { manualInput = it },
             placeholder = {
                 Text(
-                    text = "PlayStation 5 / iPad Pro", fontSize = 14.sp
+                    text = "PlayStation 5 / iPad Pro", fontSize = 14.sp, color = Color.LightGray.copy(alpha = 0.75f)
                 )
             },
             label = { Text(text = "Manual Input Device Model") },
@@ -288,7 +288,6 @@ fun AddSellScreen() = DrawTemplate {
                             errorMessage = "AI Parsing Failed: Check text input or connection."
                         } finally {
                             isAnalyzing = false
-                            appState.deviceToSell = null
                         }
                     }
                 },

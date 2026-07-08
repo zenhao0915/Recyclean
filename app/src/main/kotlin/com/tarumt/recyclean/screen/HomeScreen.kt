@@ -357,15 +357,15 @@ fun HomeScreen() {
                             modifier = Modifier.padding(4.dp),
                             itemVerticalAlignment = Alignment.CenterVertically,
                             maxItemsInEachRow = 3,
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                             horizontalArrangement = Arrangement.spacedBy(
-                                24.dp, Alignment.CenterHorizontally
+                                16.dp, Alignment.CenterHorizontally
                             )
                         ) {
                             it.devices.forEach { device ->
                                 DrawResultBox(
                                     topicText = device.deviceName,
-                                    sellerGrade = Grade.S,
+                                    sellerGrade = Grade.GG,
                                     image = painterResource(device.icon),
                                     maxWidth = 100,
                                     maxHeight = 160,

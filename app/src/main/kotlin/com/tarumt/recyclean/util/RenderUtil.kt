@@ -366,16 +366,16 @@ fun DrawResultBox(
         Image(
             modifier = Modifier
                 .width((maxWidth - 10).coerceAtLeast(50).dp)
-                .height((maxHeight - 50).coerceAtLeast(80).dp),
+                .height((maxHeight - 60).coerceAtLeast(80).dp),
             painter = image,
             contentScale = ContentScale.Fit,
             contentDescription = null
         )
         // Grade
         Row(
-            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Top
+            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
         ) {
-            DrawGradeBox(sellerGrade)
+            if (sellerGrade != Grade.GG) DrawGradeBox(sellerGrade)
 
             Spacer(Modifier.width(6.dp))
             Text(
@@ -385,7 +385,7 @@ fun DrawResultBox(
                 fontSize = defaultFontSize,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
         }

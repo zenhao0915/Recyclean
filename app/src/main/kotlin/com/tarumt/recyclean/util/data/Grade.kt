@@ -5,5 +5,6 @@ enum class Grade(var grade: String, val description: String) {
     S("S", "Great"),
     A("A", "Perfect"),
     B("B", "Good"),
-    C("C", "Working")
+    C("C", "Working"),
+    GG("Ignore", "Ignore")
 }
