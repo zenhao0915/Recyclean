@@ -101,13 +101,14 @@ fun GlassBox(
     blurRadius: Dp = 40.dp,
     borderWidth: Dp = 1.dp,
     isDarkTheme: Boolean = false,
+    isHighAlpha: Boolean = false,
     contentAlignment: Alignment = Alignment.Center,
     content: @Composable BoxScope.() -> Unit
 ) {
     val baseGlassColors = if (isDarkTheme) {
-        Color(0x331A1A1A)
+        if (isHighAlpha) Color.Gray.copy(alpha = 0.9f) else Color(0x331A1A1A)
     } else {
-        Color(0xB3D7D7D7)
+        if (isHighAlpha) Color.White.copy(alpha = 0.9f) else Color(0xB3D7D7D7)
     }
 
     val borderBrush = Brush.verticalGradient(

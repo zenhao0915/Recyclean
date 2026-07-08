@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
@@ -340,12 +341,14 @@ fun HomeScreen() {
         if (drawPopup) {
             currentProductSelected?.let {
                 Popup(
+                    offset = IntOffset(0, -320),
                     alignment = Alignment.Center, onDismissRequest = {
                         drawPopup = false
                         currentProductSelected = null
                     }) {
-                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f).background(color = Color.White.copy(alpha = 0.4f)), isDarkTheme = true) {
+                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f), isDarkTheme = true, isHighAlpha = true) {
                         Row(
+                            modifier = Modifier.padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(
                                 24.dp, Alignment.CenterHorizontally
@@ -356,8 +359,8 @@ fun HomeScreen() {
                                     topicText = device.name,
                                     sellerGrade = Grade.S,
                                     image = painterResource(device.icon),
-                                    maxWidth = 80,
-                                    maxHeight = 130
+                                    maxWidth = 100,
+                                    maxHeight = 160
                                 )
                             }
                         }
