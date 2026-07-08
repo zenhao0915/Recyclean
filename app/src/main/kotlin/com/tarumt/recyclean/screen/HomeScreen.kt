@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -54,6 +55,7 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
+import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawResultBox
@@ -341,27 +343,37 @@ fun HomeScreen() {
         if (drawPopup) {
             currentProductSelected?.let {
                 Popup(
-                    offset = IntOffset(0, -320),
-                    alignment = Alignment.Center, onDismissRequest = {
+                    offset = IntOffset(0, -320), alignment = Alignment.Center, onDismissRequest = {
                         drawPopup = false
                         currentProductSelected = null
                     }) {
-                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f), isDarkTheme = true, isHighAlpha = true) {
-                        Row(
-                            modifier = Modifier.padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+
+                    GlassBox(
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        isDarkTheme = true,
+                        isHighAlpha = true
+                    ) {
+                        FlowRow(
+                            modifier = Modifier.padding(4.dp),
+                            itemVerticalAlignment = Alignment.CenterVertically,
+                            maxItemsInEachRow = 3,
+                            verticalArrangement = Arrangement.Center,
                             horizontalArrangement = Arrangement.spacedBy(
                                 24.dp, Alignment.CenterHorizontally
                             )
                         ) {
                             it.devices.forEach { device ->
                                 DrawResultBox(
-                                    topicText = device.name,
+                                    topicText = device.deviceName,
                                     sellerGrade = Grade.S,
                                     image = painterResource(device.icon),
                                     maxWidth = 100,
-                                    maxHeight = 160
-                                )
+                                    maxHeight = 160,
+                                    textmaxWidth = 60
+                                ) {
+                                    device.deviceName.convertToPart()
+                                    appState.navigator.navigateTo(AddSellPageDestination, Offset.Zero)
+                                }
                             }
                         }
                     }

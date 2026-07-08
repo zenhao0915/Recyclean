@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -57,8 +58,11 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.common.bronzeColor
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
+import com.tarumt.recyclean.common.orangeCreamColor
+import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
 import kotlinx.coroutines.Dispatchers
@@ -67,9 +71,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
 data class SalvageablePart(
-    val name: String,
-    val estimatedPrice: Double,
-    var isSelected: Boolean = true
+    val name: String, val estimatedPrice: Double, var isSelected: Boolean = false
 )
 
 fun String.convertToPart() {
@@ -84,8 +86,7 @@ fun AddSellScreen() = DrawTemplate {
 
     val geminiModel = remember {
         GenerativeModel(
-            modelName = "gemini-3.5-flash",
-            apiKey = api_key
+            modelName = "gemini-3.1-flash-lite", apiKey = api_key
         )
     }
     val baseAiPrompt = """
@@ -127,8 +128,7 @@ fun AddSellScreen() = DrawTemplate {
                             content {
                                 image(bitmap)
                                 text(baseAiPrompt)
-                            }
-                        )
+                            })
                     }
 
                     val jsonResult = response.text ?: ""
@@ -217,8 +217,7 @@ fun AddSellScreen() = DrawTemplate {
             } ?: run {
                 GlassBox {
                     Button(
-                        onClick = { cameraLauncher.launch() },
-                        shape = RoundedCornerShape(12.dp)
+                        onClick = { cameraLauncher.launch() }, shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = "Take Photo (AI Scan)",
@@ -243,8 +242,7 @@ fun AddSellScreen() = DrawTemplate {
             onValueChange = { manualInput = it },
             placeholder = {
                 Text(
-                    text = "PlayStation 5 / iPad Pro",
-                    fontSize = 14.sp
+                    text = "PlayStation 5 / iPad Pro", fontSize = 14.sp
                 )
             },
             label = { Text(text = "Manual Input Device Model") },
@@ -290,6 +288,7 @@ fun AddSellScreen() = DrawTemplate {
                             errorMessage = "AI Parsing Failed: Check text input or connection."
                         } finally {
                             isAnalyzing = false
+                            appState.deviceToSell = null
                         }
                     }
                 },
@@ -311,13 +310,13 @@ fun AddSellScreen() = DrawTemplate {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(vertical = 10.dp)
             ) {
-                CircularProgressIndicator(color = greenCyanColor)
+                CircularProgressIndicator(color = skyBlueColor)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Thinking...",
                     fontFamily = defaultFont,
                     fontSize = 14.sp,
-                    color = greenCyanColor
+                    color = skyBlueColor
                 )
             }
         }
@@ -331,7 +330,6 @@ fun AddSellScreen() = DrawTemplate {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 识别出来的设备头部
                 Text(
                     text = "📦 Identified: $detectedDeviceName",
                     fontFamily = defaultFont,
@@ -360,12 +358,19 @@ fun AddSellScreen() = DrawTemplate {
                                 checked = checked, onCheckedChange = {
                                     checked = it
                                     part.isSelected = it
-                                }, colors = CheckboxDefaults.colors(checkedColor = greenCyanColor)
+                                }, colors = CheckboxDefaults.colors(checkedColor = bronzeColor)
                             )
-                            Text(text = part.name, fontFamily = defaultFont, fontSize = 14.sp)
+                            Text(
+                                modifier = Modifier.widthIn(max = 160.dp),
+                                text = part.name,
+                                fontFamily = defaultFont,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Start
+                            )
                         }
                         Text(
                             text = "RM ${String.format("%.2f", part.estimatedPrice)}",
+                            textAlign = TextAlign.Center,
                             fontFamily = defaultFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
@@ -392,7 +397,7 @@ fun AddSellScreen() = DrawTemplate {
                         fontFamily = defaultFont,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp,
-                        color = greenCyanColor
+                        color = orangeCreamColor
                     )
                 }
 
@@ -400,7 +405,7 @@ fun AddSellScreen() = DrawTemplate {
 
                 Button(
                     onClick = { /* 提交到数据库，通知持牌商家竞价 */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = greenCyanColor),
+                    colors = ButtonDefaults.buttonColors(containerColor = orangeCreamColor),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
