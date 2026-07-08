@@ -10,6 +10,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -342,7 +343,9 @@ fun DrawResultBox(
     topicText: String = "iPhone 67 Pro",
     sellerGrade: Grade = Grade.S,
     maxWidth: Int = 170,
-    maxHeight: Int = 250
+    maxHeight: Int = 250,
+    textmaxWidth: Int = 120,
+    onClick: (() -> Unit)? = null
 ) = Box(
     modifier = Modifier
         .width(maxWidth.dp)
@@ -351,7 +354,9 @@ fun DrawResultBox(
         .border(
             width = 0.5.dp, color = Color.Gray.copy(alpha = 0.75f), shape = RoundedCornerShape(8.dp)
         )
-        .clip(shape = RoundedCornerShape(8.dp)), contentAlignment = Alignment.TopCenter
+        .clip(shape = RoundedCornerShape(8.dp))
+        .clickable(enabled = onClick != null, onClick = { onClick?.invoke() }),
+    contentAlignment = Alignment.TopCenter
 ) {
     Column(
         modifier = Modifier.offset(y = 8.dp),
@@ -374,7 +379,7 @@ fun DrawResultBox(
 
             Spacer(Modifier.width(6.dp))
             Text(
-                modifier = Modifier.widthIn(max = 120.dp),
+                modifier = Modifier.widthIn(max = textmaxWidth.dp),
                 text = topicText,
                 fontFamily = defaultFont,
                 fontSize = defaultFontSize,
