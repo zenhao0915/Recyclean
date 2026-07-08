@@ -7,4 +7,6 @@ class AppState {
     var currentUser: User? = null
     val navigator = NavigatorState()
     var hasLoggedIn = true
+
+    var deviceToSell: String? = null
 }

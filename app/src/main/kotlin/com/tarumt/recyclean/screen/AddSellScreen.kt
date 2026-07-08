@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.tarumt.recyclean.common.api_key
+import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
 import com.tarumt.recyclean.util.DrawTemplate
@@ -70,6 +71,10 @@ data class SalvageablePart(
     val estimatedPrice: Double,
     var isSelected: Boolean = true
 )
+
+fun String.convertToPart() {
+    appState.deviceToSell = this
+}
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -86,7 +91,7 @@ fun AddSellScreen() = DrawTemplate {
     val baseAiPrompt = """
         You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
         Analyze the provided input (image or text) and identify the device.
-        List exactly 3 to 5 valuable, functional salvageable parts/components that can be extracted from this device to be sold to third-party repair shops.
+        List exactly 3 to 10 valuable, functional salvageable parts/components that can be extracted from this device to be sold to third-party repair shops.
         Estimate a reasonable market recycling value for each part in Malaysian Ringgit (RM).
         
         CRITICAL REQUIREMENT: You must reply ONLY with a valid JSON array. Do NOT wrap it in ```json ... ``` blocks, do NOT write introductory or concluding text.
@@ -97,7 +102,7 @@ fun AddSellScreen() = DrawTemplate {
         ]
     """.trimIndent()
 
-    var manualInput by remember { mutableStateOf("") }
+    var manualInput by remember { mutableStateOf(appState.deviceToSell ?: "") }
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isAnalyzing by remember { mutableStateOf(false) }
     var showResult by remember { mutableStateOf(false) }

@@ -344,7 +344,7 @@ fun HomeScreen() {
                         drawPopup = false
                         currentProductSelected = null
                     }) {
-                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f), isDarkTheme = true) {
+                    GlassBox(modifier = Modifier.fillMaxWidth(0.85f).background(color = Color.White.copy(alpha = 0.4f)), isDarkTheme = true) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(
