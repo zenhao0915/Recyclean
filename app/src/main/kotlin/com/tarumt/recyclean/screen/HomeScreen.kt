@@ -372,7 +372,6 @@ fun HomeScreen() {
                                     textmaxWidth = 60
                                 ) {
                                     device.deviceName.convertToPart()
-                                    appState.navigator.navigateTo(AddSellPageDestination, Offset.Zero)
                                 }
                             }
                         }

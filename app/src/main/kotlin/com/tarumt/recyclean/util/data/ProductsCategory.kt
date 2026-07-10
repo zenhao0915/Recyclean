@@ -3,7 +3,6 @@ package com.tarumt.recyclean.util.data
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.Microwave
 import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Speaker
@@ -16,70 +15,81 @@ import com.tarumt.recyclean.R
 enum class ProductsCategory(val icons: ImageVector, val devices: Array<AltDevices>) {
     Mobile(
         Icons.Default.PhoneIphone,
-        arrayOf(AltDevices.IPhone13Pro, AltDevices.GalaxyS22, AltDevices.BrokenIPhone11)
+        arrayOf(AltDevices.Apple, AltDevices.Samsung, AltDevices.Xiaomi, AltDevices.Huawei, AltDevices.Vivo)
     ),
     Tablet(
         Icons.Default.Tablet,
-        arrayOf(AltDevices.IPadPro, AltDevices.GalaxyTabS8)
+        arrayOf(AltDevices.AppleIPad, AltDevices.SamsungTab, AltDevices.XiaomiPad)
     ),
     Laptop(
         Icons.Default.Laptop,
-        arrayOf(AltDevices.MacBookPro, AltDevices.AsusROG, AltDevices.DellXPS)
+        arrayOf(AltDevices.MacBook, AltDevices.ASUS, AltDevices.Dell, AltDevices.HP, AltDevices.Lenovo)
     ),
     Watch(
         Icons.Default.Watch,
-        arrayOf(AltDevices.AppleWatch7, AltDevices.GalaxyWatch4)
+        arrayOf(AltDevices.AppleWatch, AltDevices.GalaxyWatch, AltDevices.Garmin)
     ),
     TV(
         Icons.Default.Tv,
-        arrayOf(AltDevices.SamsungTV, AltDevices.SonyTV)
+        arrayOf(AltDevices.SonyTV, AltDevices.SamsungTV, AltDevices.LGTV, AltDevices.XiaomiTV)
     ),
     Speaker(
         Icons.Default.Speaker,
-        arrayOf(AltDevices.JBLFlip5, AltDevices.SonySRS)
+        arrayOf(AltDevices.JBL, AltDevices.SonySpeaker, AltDevices.Marshall)
     ),
     Monitor(
         Icons.Default.Monitor,
-        arrayOf(AltDevices.LGUltraGear, AltDevices.SamsungOdyssey)
+        arrayOf(AltDevices.LGMonitor, AltDevices.ASUSMonitor, AltDevices.SamsungMonitor)
     ),
     Camera(
         Icons.Default.CameraAlt,
-        arrayOf(AltDevices.CanonR6, AltDevices.SonyA7)
+        arrayOf(AltDevices.SonyCamera, AltDevices.Canon, AltDevices.Fujifilm)
     )
 }
 
 enum class AltDevices(val deviceName: String, val icon: Int = R.drawable.ic_launcher_foreground) {
-    // --- Mobile ---
-    IPhone13Pro("iPhone 13 Pro"),
-    GalaxyS22("Samsung Galaxy S22"),
-    BrokenIPhone11("Broken iPhone 11"),
+    // 手机品牌
+    Apple("Apple", R.drawable.apple_logo),
+    Samsung("Samsung", R.drawable.samsung_logo),
+    Xiaomi("Xiaomi", R.drawable.xiaomi_logo),
+    Huawei("Huawei", R.drawable.huawei_logo),
+    Vivo("Vivo", R.drawable.vivo_logo),
 
-    // --- Tablet ---
-    IPadPro("iPad Pro 12.9"),
-    GalaxyTabS8("Samsung Galaxy Tab S8"),
+    // 平板品牌
+    AppleIPad("Apple iPad", R.drawable.apple_logo),
+    SamsungTab("Samsung Galaxy Tab", R.drawable.samsung_logo),
+    XiaomiPad("Xiaomi Pad", R.drawable.xiaomi_logo),
 
-    // --- Laptop ---
-    MacBookPro("MacBook Pro 2020"),
-    AsusROG("ASUS ROG Zephyrus"),
-    DellXPS("Dell XPS 13"),
+    // 电脑品牌
+    MacBook("Apple MacBook", R.drawable.apple_logo),
+    ASUS("ASUS", R.drawable.asus_logo),
+    Dell("Dell", R.drawable.dell_logo),
+    HP("HP", R.drawable.hp_logo),
+    Lenovo("Lenovo", R.drawable.lenovo_logo),
 
-    // --- Watch ---
-    AppleWatch7("Apple Watch Series 7"),
-    GalaxyWatch4("Samsung Galaxy Watch 4"),
+    // 手表品牌
+    AppleWatch("Apple Watch", R.drawable.apple_logo),
+    GalaxyWatch("Samsung Galaxy Watch", R.drawable.samsung_logo),
+    Garmin("Garmin", R.drawable.garmin_logo),
 
-    // --- Microwave ---
-    SamsungTV("Samsung 65inch TV"),
-    SonyTV("Sony 55inch Smart TV"),
+    // 电视品牌
+    SonyTV("Sony TV", R.drawable.sony_logo),
+    SamsungTV("Samsung TV", R.drawable.samsung_logo),
+    LGTV("LG TV", R.drawable.lg_logo),
+    XiaomiTV("Xiaomi TV", R.drawable.xiaomi_logo),
 
-    // --- Speaker ---
-    JBLFlip5("JBL Flip 5"),
-    SonySRS("Sony SRS-XB33"),
+    // 音响品牌
+    JBL("JBL", R.drawable.jbl_logo),
+    SonySpeaker("Sony Speaker", R.drawable.sony_logo),
+    Marshall("Marshall", R.drawable.marshall_logo),
 
-    // --- Monitor ---
-    LGUltraGear("LG UltraGear 27\""),
-    SamsungOdyssey("Samsung Odyssey G7"),
+    // 显示器品牌
+    LGMonitor("LG Monitor", R.drawable.lg_logo),
+    ASUSMonitor("ASUS Monitor", R.drawable.asus_logo),
+    SamsungMonitor("Samsung Monitor", R.drawable.samsung_logo),
 
-    // --- Camera ---
-    CanonR6("Canon EOS R6"),
-    SonyA7("Sony Alpha 7 IV")
+    // 相机品牌
+    SonyCamera("Sony Camera", R.drawable.sony_logo),
+    Canon("Canon", R.drawable.canon_logo),
+    Fujifilm("Fujifilm", R.drawable.fujifilm_logo)
 }

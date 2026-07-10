@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -63,6 +64,7 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
+import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +76,9 @@ data class SalvageablePart(
     val name: String, val estimatedPrice: Double, var isSelected: Boolean = false
 )
 
-fun String.convertToPart() {
-    appState.deviceToSell = this
+fun String.convertToPart() = appState.apply {
+    deviceToSell = this@convertToPart
+    navigator.navigateTo(AddSellPageDestination, Offset.Zero)
 }
 
 @SuppressLint("DefaultLocale")
@@ -242,7 +245,9 @@ fun AddSellScreen() = DrawTemplate {
             onValueChange = { manualInput = it },
             placeholder = {
                 Text(
-                    text = "PlayStation 5 / iPad Pro", fontSize = 14.sp, color = Color.LightGray.copy(alpha = 0.75f)
+                    text = "PlayStation 5 / iPad Pro",
+                    fontSize = 14.sp,
+                    color = Color.LightGray.copy(alpha = 0.75f)
                 )
             },
             label = { Text(text = "Manual Input Device Model") },
