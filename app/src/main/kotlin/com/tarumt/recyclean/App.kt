@@ -1,10 +1,12 @@
 package com.tarumt.recyclean
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,29 +27,32 @@ import com.tarumt.recyclean.screen.LoginScreen
 import com.tarumt.recyclean.screen.ProfileScreen
 import com.tarumt.recyclean.util.DrawNavigator
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App() {
     MaterialTheme {
-        AppNavigator(appState.navigator, homeContent = {
-            LoginScreen()
-        }, destinationContent = { destination ->
-            when (destination) {
-                is LoginPageDestination -> LoginScreen()
-                is HomePageDestination -> HomeScreen()
-                is AppointmentPageDestination -> AppointmentScreen()
-                is AddSellPageDestination -> AddSellScreen()
-                is DataPageDestination -> AdminDataSceen()
-                is ProfilePageDestination -> ProfileScreen()
-            }
-        })
+        Scaffold(topBar = {}, bottomBar = {}, floatingActionButton = {}) {
+            AppNavigator(appState.navigator, homeContent = {
+                LoginScreen()
+            }, destinationContent = { destination ->
+                when (destination) {
+                    is LoginPageDestination -> LoginScreen()
+                    is HomePageDestination -> HomeScreen()
+                    is AppointmentPageDestination -> AppointmentScreen()
+                    is AddSellPageDestination -> AddSellScreen()
+                    is DataPageDestination -> AdminDataSceen()
+                    is ProfilePageDestination -> ProfileScreen()
+                }
+            })
 
-        // Navigator
-        Row(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(12.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.Center
-        ) { if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator() }
+            // Navigator
+            Row(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) { if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator() }
+        }
     }
 }
