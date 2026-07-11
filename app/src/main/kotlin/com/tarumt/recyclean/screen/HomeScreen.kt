@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -55,7 +54,6 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
-import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.DrawResultBox
@@ -70,7 +68,7 @@ fun HomeScreen() {
     val scrollableState = rememberScrollState()
     var drawPopup by remember { mutableStateOf(false) }
     var currentProductSelected by remember { mutableStateOf<ProductsCategory?>(null) }
-
+    var currentSellersSelected by remember { mutableStateOf<Sellers?>(null) }
     // Search
     Box(
         modifier = Modifier
@@ -334,44 +332,67 @@ fun HomeScreen() {
                     DrawResultBox(
                         topicText = seller.sellerName,
                         sellerGrade = seller.gradeDetails,
-                        image = painterResource(seller.sellerLogo)
-                    )
+                        image = painterResource(seller.sellerLogo),
+                        onClick = {
+                            drawPopup = true
+                            currentSellersSelected = seller
+                        })
                 }
             }
         }
 
         if (drawPopup) {
-            currentProductSelected?.let {
-                Popup(
-                    offset = IntOffset(0, -320), alignment = Alignment.Center, onDismissRequest = {
-                        drawPopup = false
-                        currentProductSelected = null
-                    }) {
-
-                    GlassBox(
-                        modifier = Modifier.fillMaxWidth(0.85f),
-                        isDarkTheme = true,
-                        isHighAlpha = true
+            currentSellersSelected?.let { currentSeller ->
+                Popup(offset = IntOffset(100, 250), onDismissRequest = {
+                    drawPopup = false
+                    currentSellersSelected = null
+                }) {
+                    Box(
+                        modifier = Modifier.width(350.dp).height(400.dp)
+                            .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+                            .border(color = Color.Black, width = 1.dp, shape = RoundedCornerShape(16.dp))
                     ) {
-                        FlowRow(
-                            modifier = Modifier.padding(4.dp),
-                            itemVerticalAlignment = Alignment.CenterVertically,
-                            maxItemsInEachRow = 3,
-                            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                16.dp, Alignment.CenterHorizontally
-                            )
+                        Text("Diu")
+                    }
+                }
+
+            } ?: run {
+                currentProductSelected?.let {
+                    Popup(
+                        offset = IntOffset(0, -320),
+                        alignment = Alignment.Center,
+                        onDismissRequest = {
+                            drawPopup = false
+                            currentProductSelected = null
+                        }) {
+
+                        GlassBox(
+                            modifier = Modifier.fillMaxWidth(0.85f),
+                            isDarkTheme = true,
+                            isHighAlpha = true
                         ) {
-                            it.devices.forEach { device ->
-                                DrawResultBox(
-                                    topicText = device.deviceName,
-                                    sellerGrade = Grade.GG,
-                                    image = painterResource(device.icon),
-                                    maxWidth = 100,
-                                    maxHeight = 160,
-                                    textmaxWidth = 60
-                                ) {
-                                    device.deviceName.convertToPart()
+                            FlowRow(
+                                modifier = Modifier.padding(4.dp),
+                                itemVerticalAlignment = Alignment.CenterVertically,
+                                maxItemsInEachRow = 3,
+                                verticalArrangement = Arrangement.spacedBy(
+                                    16.dp, Alignment.CenterVertically
+                                ),
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    16.dp, Alignment.CenterHorizontally
+                                )
+                            ) {
+                                it.devices.forEach { device ->
+                                    DrawResultBox(
+                                        topicText = device.deviceName,
+                                        sellerGrade = Grade.GG,
+                                        image = painterResource(device.icon),
+                                        maxWidth = 100,
+                                        maxHeight = 160,
+                                        textmaxWidth = 60
+                                    ) {
+                                        device.deviceName.convertToPart()
+                                    }
                                 }
                             }
                         }
