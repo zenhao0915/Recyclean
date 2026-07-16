@@ -10,6 +10,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -62,11 +65,13 @@ import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.bronzeColor
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
+import com.tarumt.recyclean.common.lightBlueColor
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
+import com.tarumt.recyclean.util.data.Sellers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -86,6 +91,18 @@ fun String.convertToPart() = appState.apply {
 @Preview
 fun AddSellScreen() = DrawTemplate {
     val coroutineScope = rememberCoroutineScope()
+    val sellerRowScrollState = rememberScrollState()
+
+    var manualInput by remember { mutableStateOf(appState.deviceToSell ?: "") }
+    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isAnalyzing by remember { mutableStateOf(false) }
+    var showResult by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    var detectedDeviceName by remember { mutableStateOf("") }
+    val partList = remember { mutableStateListOf<SalvageablePart>() }
+
+    var selectedSeller by remember { mutableStateOf(Sellers.SenHeng) }
 
     val geminiModel = remember {
         GenerativeModel(
@@ -105,15 +122,6 @@ fun AddSellScreen() = DrawTemplate {
           {"name": "OLED Screen Panel (Screen)", "price": 180.5}
         ]
     """.trimIndent()
-
-    var manualInput by remember { mutableStateOf(appState.deviceToSell ?: "") }
-    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isAnalyzing by remember { mutableStateOf(false) }
-    var showResult by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-
-    var detectedDeviceName by remember { mutableStateOf("") }
-    val partList = remember { mutableStateListOf<SalvageablePart>() }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
@@ -160,7 +168,6 @@ fun AddSellScreen() = DrawTemplate {
         }
     }
 
-    // 主体滚动布局
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -300,7 +307,6 @@ fun AddSellScreen() = DrawTemplate {
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 Text(text = "Analyze Text with AI", fontFamily = defaultFont)
             }
         }
@@ -383,6 +389,47 @@ fun AddSellScreen() = DrawTemplate {
                 }
 
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+                Text(
+                    text = "Select Target Recycler:",
+                    fontFamily = defaultFont,
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(sellerRowScrollState)
+                        .background(Color.Gray.copy(alpha = 0.08f), CircleShape)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Sellers.entries.forEach { seller ->
+                        val isSelected = selectedSeller == seller
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(
+                                    color = if (isSelected) lightBlueColor else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clickable { selectedSeller = seller }
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = seller.sellerName,
+                                fontFamily = defaultFont,
+                                fontSize = 13.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
                 val totalPrice = partList.filter { it.isSelected }.sumOf { it.estimatedPrice }
                 Row(
@@ -408,7 +455,7 @@ fun AddSellScreen() = DrawTemplate {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { /* 提交到数据库，通知持牌商家竞价 */ },
+                    onClick = { /* 继续保持空着，之后再写 */ },
                     colors = ButtonDefaults.buttonColors(containerColor = orangeCreamColor),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
