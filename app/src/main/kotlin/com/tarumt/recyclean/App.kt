@@ -31,7 +31,10 @@ import com.tarumt.recyclean.util.DrawNavigator
 @Composable
 fun App() {
     MaterialTheme {
-        Scaffold(topBar = {}, bottomBar = {}, floatingActionButton = {}) {
+        Scaffold(bottomBar = {
+            // Navigator
+            if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
+        }, floatingActionButton = {}) {
             AppNavigator(appState.navigator, homeContent = {
                 LoginScreen()
             }, destinationContent = { destination ->
@@ -44,15 +47,6 @@ fun App() {
                     is ProfilePageDestination -> ProfileScreen()
                 }
             })
-
-            // Navigator
-            Row(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.Center
-            ) { if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator() }
         }
     }
 }
