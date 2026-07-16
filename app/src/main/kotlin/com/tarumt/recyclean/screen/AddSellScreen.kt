@@ -455,7 +455,35 @@ fun AddSellScreen() = DrawTemplate {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { /* 继续保持空着，之后再写 */ },
+                    onClick = {
+                        // 1. Filter out only the parts the user actually checked
+                        val selectedParts = partList.filter { it.isSelected }
+
+                        if (selectedParts.isNotEmpty()) {
+                            // 2. Create a new Appointment object
+                            val newAppointment = Appointment(
+                                appointmentId = "APT-${System.currentTimeMillis().toString().takeLast(4)}", // Generates a random ID like APT-5832
+                                userName = "Current User", // You can replace this with actual user profile data later
+                                deviceName = detectedDeviceName,
+                                scheduledDate = "Pending Date",
+                                estimatedValue = totalPrice,
+                                status = AppointmentStatus.PENDING,
+                                selectedParts = selectedParts,
+                                targetSeller = selectedSeller.sellerName
+                            )
+
+                            // 3. Save it to our global state
+                            appState.pendingAppointments.add(newAppointment)
+
+                            // 4. (Optional) Navigate the user to a success screen or clear the form
+                            // appState.navigator.navigateTo(SuccessScreenDestination)
+
+                            // Reset for the next demo scan
+                            capturedBitmap = null
+                            manualInput = ""
+                            showResult = false
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = orangeCreamColor),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()

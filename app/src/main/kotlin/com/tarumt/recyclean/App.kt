@@ -21,6 +21,7 @@ import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.ProfilePageDestination
 import com.tarumt.recyclean.screen.AddSellScreen
 import com.tarumt.recyclean.screen.AdminDataSceen
+import com.tarumt.recyclean.screen.AppointmentListScreen
 import com.tarumt.recyclean.screen.AppointmentScreen
 import com.tarumt.recyclean.screen.HomeScreen
 import com.tarumt.recyclean.screen.LoginScreen
@@ -43,7 +44,9 @@ fun App() {
                     is HomePageDestination -> HomeScreen()
                     is AppointmentPageDestination -> AppointmentScreen()
                     is AddSellPageDestination -> AddSellScreen()
-                    is DataPageDestination -> AdminDataSceen()
+                    is DataPageDestination -> AppointmentListScreen(
+                        onAppointmentClick = { }
+                    )
                     is ProfilePageDestination -> ProfileScreen()
                 }
             })
