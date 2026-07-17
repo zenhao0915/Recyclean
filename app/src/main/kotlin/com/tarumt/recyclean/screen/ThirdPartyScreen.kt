@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,12 +39,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.util.data.Appointment
 
 @Preview(showBackground = true, name = "Appointment List Preview")
 @Composable
 fun AppointmentListScreenPreview() {
     MaterialTheme {
-
         AppointmentListScreen(
             onAppointmentClick = { }
         )
@@ -53,7 +54,6 @@ fun AppointmentListScreenPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentListScreen(
-    // Pull the live list from the global state
     appointments: List<Appointment> = appState.pendingAppointments,
     onAppointmentClick: (String) -> Unit
 ) {
@@ -86,6 +86,7 @@ fun AppointmentListScreen(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
     Card(
@@ -144,7 +145,7 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                     text = String.format("RM %.2f", appointment.estimatedValue),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 16.sp,
-                    color = Color(0xFF2E7D32) // A nice green color for money
+                    color = Color(0xFF2E7D32)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 // Status Badge

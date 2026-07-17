@@ -41,7 +41,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,8 +68,11 @@ import com.tarumt.recyclean.common.lightBlueColor
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.navigation.AddSellPageDestination
+import com.tarumt.recyclean.navigation.DataPageDestination
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
+import com.tarumt.recyclean.util.data.Appointment
+import com.tarumt.recyclean.util.data.AppointmentStatus
 import com.tarumt.recyclean.util.data.Sellers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,22 +95,15 @@ fun AddSellScreen() = DrawTemplate {
     val coroutineScope = rememberCoroutineScope()
     val sellerRowScrollState = rememberScrollState()
 
-    var manualInput by remember { mutableStateOf(appState.deviceToSell ?: "") }
-    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var manualInput by remember(appState.deviceToSell) { mutableStateOf(appState.deviceToSell ?: "") }
+
     var isAnalyzing by remember { mutableStateOf(false) }
-    var showResult by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    var detectedDeviceName by remember { mutableStateOf("") }
-    val partList = remember { mutableStateListOf<SalvageablePart>() }
-
-    var selectedSeller by remember { mutableStateOf(Sellers.SenHeng) }
-
     val geminiModel = remember {
-        GenerativeModel(
-            modelName = "gemini-3.1-flash-lite", apiKey = api_key
-        )
+        GenerativeModel(modelName = "gemini-3.1-flash-lite", apiKey = api_key)
     }
+
     val baseAiPrompt = """
         You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
         Analyze the provided input (image or text) and identify the device.
@@ -127,11 +122,11 @@ fun AddSellScreen() = DrawTemplate {
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            capturedBitmap = bitmap
+            appState.cachedBitmap = bitmap
             errorMessage = ""
             coroutineScope.launch {
                 isAnalyzing = true
-                showResult = false
+                appState.showResult = false
 
                 try {
                     val response = withContext(Dispatchers.IO) {
@@ -145,19 +140,19 @@ fun AddSellScreen() = DrawTemplate {
                     val jsonResult = response.text ?: ""
                     Log.d("GeminiAI", "Raw Response: $jsonResult")
 
-                    partList.clear()
+                    appState.cachedPartList.clear()
                     val jsonArray = JSONArray(jsonResult.trim())
                     for (i in 0 until jsonArray.length()) {
                         val obj = jsonArray.getJSONObject(i)
-                        partList.add(
+                        appState.cachedPartList.add(
                             SalvageablePart(
                                 name = obj.getString("name"),
                                 estimatedPrice = obj.getDouble("price")
                             )
                         )
                     }
-                    detectedDeviceName = "Detected Smart Device"
-                    showResult = true
+                    appState.detectedDeviceName = "Detected Smart Device"
+                    appState.showResult = true
                 } catch (e: Exception) {
                     Log.e("GeminiAI", "Error calling API", e)
                     errorMessage = "AI Analysis Failed: Please try again."
@@ -202,7 +197,7 @@ fun AddSellScreen() = DrawTemplate {
                 .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
                 .clip(RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center
         ) {
-            capturedBitmap?.let { cbm ->
+            appState.cachedBitmap?.let { cbm ->
                 Image(
                     bitmap = cbm.asImageBitmap(),
                     contentDescription = "Captured Device",
@@ -210,7 +205,7 @@ fun AddSellScreen() = DrawTemplate {
                     modifier = Modifier.fillMaxSize()
                 )
                 IconButton(
-                    onClick = { capturedBitmap = null; showResult = false },
+                    onClick = { appState.cachedBitmap = null; appState.showResult = false },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
@@ -249,7 +244,10 @@ fun AddSellScreen() = DrawTemplate {
 
         OutlinedTextField(
             value = manualInput,
-            onValueChange = { manualInput = it },
+            onValueChange = {
+                manualInput = it
+                appState.deviceToSell = it
+            },
             placeholder = {
                 Text(
                     text = "PlayStation 5 / iPad Pro",
@@ -265,13 +263,13 @@ fun AddSellScreen() = DrawTemplate {
             )
         )
 
-        if (manualInput.isNotEmpty() && capturedBitmap == null) {
+        if (manualInput.isNotEmpty() && appState.cachedBitmap == null) {
             Button(
                 onClick = {
                     errorMessage = ""
                     coroutineScope.launch {
                         isAnalyzing = true
-                        showResult = false
+                        appState.showResult = false
                         try {
                             val response = withContext(Dispatchers.IO) {
                                 geminiModel.generateContent(
@@ -282,19 +280,19 @@ fun AddSellScreen() = DrawTemplate {
                             val jsonResult = response.text ?: ""
                             Log.d("GeminiAI", "Raw Response: $jsonResult")
 
-                            partList.clear()
+                            appState.cachedPartList.clear()
                             val jsonArray = JSONArray(jsonResult.trim())
                             for (i in 0 until jsonArray.length()) {
                                 val obj = jsonArray.getJSONObject(i)
-                                partList.add(
+                                appState.cachedPartList.add(
                                     SalvageablePart(
                                         name = obj.getString("name"),
                                         estimatedPrice = obj.getDouble("price")
                                     )
                                 )
                             }
-                            detectedDeviceName = manualInput
-                            showResult = true
+                            appState.detectedDeviceName = manualInput
+                            appState.showResult = true
                         } catch (e: Exception) {
                             Log.e("GeminiAI", "Error calling API", e)
                             errorMessage = "AI Parsing Failed: Check text input or connection."
@@ -331,7 +329,7 @@ fun AddSellScreen() = DrawTemplate {
             }
         }
 
-        AnimatedVisibility(visible = showResult) {
+        AnimatedVisibility(visible = appState.showResult) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -341,7 +339,7 @@ fun AddSellScreen() = DrawTemplate {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "📦 Identified: $detectedDeviceName",
+                    text = "📦 Identified: ${appState.detectedDeviceName}",
                     fontFamily = defaultFont,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
@@ -356,8 +354,8 @@ fun AddSellScreen() = DrawTemplate {
                     color = Color.Gray
                 )
 
-                partList.forEach { part ->
-                    var checked by remember { mutableStateOf(part.isSelected) }
+                appState.cachedPartList.forEach { part ->
+                    var checked by remember(part.isSelected) { mutableStateOf(part.isSelected) }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -406,7 +404,7 @@ fun AddSellScreen() = DrawTemplate {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Sellers.entries.forEach { seller ->
-                        val isSelected = selectedSeller == seller
+                        val isSelected = appState.selectedSeller == seller
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -414,10 +412,9 @@ fun AddSellScreen() = DrawTemplate {
                                     color = if (isSelected) lightBlueColor else Color.Transparent,
                                     shape = CircleShape
                                 )
-                                .clickable { selectedSeller = seller }
+                                .clickable { appState.selectedSeller = seller }
                                 .padding(horizontal = 14.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                            contentAlignment = Alignment.Center) {
                             Text(
                                 text = seller.sellerName,
                                 fontFamily = defaultFont,
@@ -431,7 +428,7 @@ fun AddSellScreen() = DrawTemplate {
 
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                val totalPrice = partList.filter { it.isSelected }.sumOf { it.estimatedPrice }
+                val totalPrice = appState.cachedPartList.filter { it.isSelected }.sumOf { it.estimatedPrice }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -456,32 +453,28 @@ fun AddSellScreen() = DrawTemplate {
 
                 Button(
                     onClick = {
-                        // 1. Filter out only the parts the user actually checked
-                        val selectedParts = partList.filter { it.isSelected }
+                        val selectedParts = appState.cachedPartList.filter { it.isSelected }
 
                         if (selectedParts.isNotEmpty()) {
-                            // 2. Create a new Appointment object
                             val newAppointment = Appointment(
-                                appointmentId = "APT-${System.currentTimeMillis().toString().takeLast(4)}", // Generates a random ID like APT-5832
-                                userName = "Current User", // You can replace this with actual user profile data later
-                                deviceName = detectedDeviceName,
+                                appointmentId = "APT-${System.currentTimeMillis().toString().takeLast(4)}",
+                                userName = "Current User",
+                                deviceName = appState.detectedDeviceName,
                                 scheduledDate = "Pending Date",
                                 estimatedValue = totalPrice,
                                 status = AppointmentStatus.PENDING,
                                 selectedParts = selectedParts,
-                                targetSeller = selectedSeller.sellerName
+                                targetSeller = appState.selectedSeller.sellerName
                             )
 
-                            // 3. Save it to our global state
                             appState.pendingAppointments.add(newAppointment)
+                            appState.navigator.navigateTo(DataPageDestination, appState.lastTouchOffset)
 
-                            // 4. (Optional) Navigate the user to a success screen or clear the form
-                            // appState.navigator.navigateTo(SuccessScreenDestination)
-
-                            // Reset for the next demo scan
-                            capturedBitmap = null
+                            appState.cachedBitmap = null
                             manualInput = ""
-                            showResult = false
+                            appState.deviceToSell = ""
+                            appState.showResult = false
+                            appState.cachedPartList.clear()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = orangeCreamColor),
