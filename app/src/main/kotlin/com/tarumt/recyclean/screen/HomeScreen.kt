@@ -77,8 +77,7 @@ fun HomeScreen() {
     ) {
         Column(
             modifier = Modifier
-                .offset(y = 14.dp)
-                .fillMaxHeight(0.86f)
+                .fillMaxHeight(0.98f)
                 .verticalScroll(scrollableState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -342,17 +341,63 @@ fun HomeScreen() {
         }
 
         if (drawPopup) {
-            currentSellersSelected?.let { currentSeller ->
-                Popup(offset = IntOffset(100, 250), onDismissRequest = {
-                    drawPopup = false
-                    currentSellersSelected = null
-                }) {
-                    Box(
-                        modifier = Modifier.width(350.dp).height(400.dp)
-                            .background(color = Color.White, shape = RoundedCornerShape(16.dp))
-                            .border(color = Color.Black, width = 1.dp, shape = RoundedCornerShape(16.dp))
+            Box( // Background Layer For Popup
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
                     ) {
-                        Text("Diu")
+                        drawPopup = false
+                        currentSellersSelected = null
+                        currentProductSelected = null
+                    }
+            )
+            currentSellersSelected?.let { currentSeller ->
+                Popup(
+                    offset = IntOffset(
+                        appState.lastTouchOffset.x.toInt() - 60,
+                        appState.lastTouchOffset.y.toInt() - 80
+                    ), onDismissRequest = {
+                        drawPopup = false
+                        currentSellersSelected = null
+                    }) {
+                    Box(
+                        modifier = Modifier
+                            //.width(350.dp)
+                            .padding(16.dp)
+                            .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+                            .border(
+                                color = Color.Black, width = 1.dp, shape = RoundedCornerShape(16.dp)
+                            )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Column(
+                                modifier = Modifier.width(180.dp).padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(
+                                    8.dp, Alignment.Top
+                                )
+                            ) {
+                                Text("Address: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
+                                Text(currentSeller.address, fontSize = defaultFontSize, fontFamily = defaultFont)
+
+                                Text("Phone: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
+                                Text(currentSeller.phoneNumber, fontSize = defaultFontSize, fontFamily = defaultFont)
+
+                                Text("Operation Time: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
+                                Text(currentSeller.operationTime, fontSize = defaultFontSize, fontFamily = defaultFont)
+                            }
+                            Image(
+                                modifier = Modifier
+                                    .width(160.dp)
+                                    .height(160.dp).padding(4.dp),
+                                painter = painterResource(currentSeller.sellerLogo), contentDescription = null, contentScale = ContentScale.Fit)
+                        }
                     }
                 }
 
