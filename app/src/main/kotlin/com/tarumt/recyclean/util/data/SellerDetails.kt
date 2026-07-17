@@ -16,7 +16,7 @@ enum class Sellers(
         R.drawable.senheng_logo,
         phoneNumber = "011-1088 0436",
         address = "Jalan 1/37, Jalan Kepong, 52100 Kuala Lumpur",
-        operationTime = ""
+        operationTime = "10.00am - 9.00pm"
     ),
     TNB("TNB", Grade.S_Plus, R.drawable.tnb_logo,
         phoneNumber = "1-300-88-5454",
