@@ -2,6 +2,7 @@ package com.tarumt.recyclean
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.AppNavigator
@@ -48,7 +50,7 @@ fun App() {
                 // Navigator
                 if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
             }, floatingActionButton = {}) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding)) {
+                Box(modifier = Modifier.padding(if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(0.dp))) {
                     AppNavigator(appState.navigator, homeContent = {
                         LoginScreen()
                     }, destinationContent = { destination ->
