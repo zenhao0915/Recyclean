@@ -84,9 +84,9 @@ fun DrawTemplate(contentAlignment: Alignment = Alignment.TopCenter, value: @Comp
         Column(
             modifier = Modifier
                 .offset(y = 14.dp)
-                .fillMaxHeight(0.86f)
+                .fillMaxHeight(0.98f)
                 .fillMaxWidth(0.9f)
-                .padding(top = 24.dp, bottom = 24.dp)
+                .padding(bottom = 24.dp)
                 .verticalScroll(scrollableState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
@@ -148,7 +148,7 @@ fun GlassBox(
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun DrawNavigator() =
-    Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.height(120.dp)) {
+    Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.background(color = Color.Transparent)) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
