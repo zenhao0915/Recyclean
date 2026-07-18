@@ -2,6 +2,8 @@ package com.tarumt.recyclean.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -35,14 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
-import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.greenCyanColor
+import com.tarumt.recyclean.common.lightBlueColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.navigation.HomePageDestination
 import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.GlassBox
-import com.tarumt.recyclean.util.GlassLiquidSwitch
+import com.tarumt.recyclean.util.data.UserState
 
 @Composable
 @Preview
@@ -56,7 +59,6 @@ fun LoginScreen() = Box(contentAlignment = Alignment.Center) {
 
     val width = 320.dp
     val height = 500.dp
-    val isAdmin = remember { mutableStateOf(true) }
     val userName = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -198,21 +200,36 @@ fun LoginScreen() = Box(contentAlignment = Alignment.Center) {
 
                 // Admin Login Row
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .background(Color.Gray.copy(alpha = 0.35f), CircleShape)
+                        .border(width = 0.5.dp, Color.Black.copy(alpha = 0.2f), CircleShape),
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Admin Login",
-                        fontFamily = defaultBoldFont,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black.copy(alpha = 0.9f)
-                    )
-                    GlassLiquidSwitch(
-                        checked = isAdmin.value, onCheckedChange = {
-                            appState.hasLoggedIn = !appState.hasLoggedIn
-                            isAdmin.value = appState.hasLoggedIn
-                        })
+                    UserState.entries.forEach { userState ->
+                        val isSelected = appState.currentUserState == userState
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(
+                                    color = if (isSelected) lightBlueColor else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clickable {
+                                    appState.currentUserState = userState
+                                    appState.currentUser?.currentUserState = userState
+                                }
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center) {
+                            Text(
+                                text = userState.name,
+                                fontFamily = defaultFont,
+                                fontSize = 13.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.Black else Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                 }
 
                 Text(

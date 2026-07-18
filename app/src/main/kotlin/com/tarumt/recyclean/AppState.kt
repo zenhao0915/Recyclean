@@ -11,13 +11,15 @@ import com.tarumt.recyclean.screen.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User
+import com.tarumt.recyclean.util.data.UserState
 
 class AppState {
-    var currentUser: User? = null
+    var currentUser by mutableStateOf<User?>(null)
+    var currentUserState by mutableStateOf(UserState.Normal)
+    val hasLoggedIn: Boolean
+        get() = currentUser?.isValidUser ?: false
     val navigator = NavigatorState()
     var lastTouchOffset by mutableStateOf(Offset.Zero)
-
-    var hasLoggedIn = true
 
     var deviceToSell: String? = null
     var cachedBitmap by mutableStateOf<Bitmap?>(null)
@@ -27,4 +29,10 @@ class AppState {
     var selectedSeller by mutableStateOf(Sellers.SenHeng)
 
     val pendingAppointments = mutableStateListOf<Appointment>()
+
+    init {
+        currentUser = User("test", "test")
+        currentUserState = currentUser?.currentUserState ?: UserState.Normal
+        print("AppState Init")
+    }
 }
