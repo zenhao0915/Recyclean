@@ -1,4 +1,4 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.menu
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image

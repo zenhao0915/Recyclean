@@ -16,17 +16,21 @@ import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.AppNavigator
-import com.tarumt.recyclean.navigation.AppointmentPageDestination
 import com.tarumt.recyclean.navigation.DataPageDestination
 import com.tarumt.recyclean.navigation.LoginPageDestination
+import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.navigation.ProfilePageDestination
-import com.tarumt.recyclean.screen.AddSellScreen
-import com.tarumt.recyclean.screen.AppointmentListScreen
-import com.tarumt.recyclean.screen.AppointmentScreen
-import com.tarumt.recyclean.screen.HomeScreen
-import com.tarumt.recyclean.screen.LoginScreen
-import com.tarumt.recyclean.screen.ProfileScreen
+import com.tarumt.recyclean.screen.addsell.AddSellScreen
+import com.tarumt.recyclean.screen.addsell.AdminAddSellScreen
+import com.tarumt.recyclean.screen.data.AdminDataScreen
+import com.tarumt.recyclean.screen.data.DefaultDataScreen
+import com.tarumt.recyclean.screen.meeting.DefaultMeetingScreen
+import com.tarumt.recyclean.screen.meeting.ThirdPartyMeetingScreen
+import com.tarumt.recyclean.screen.menu.HomeScreen
+import com.tarumt.recyclean.screen.menu.LoginScreen
+import com.tarumt.recyclean.screen.menu.ProfileScreen
 import com.tarumt.recyclean.util.DrawNavigator
+import com.tarumt.recyclean.util.data.UserState
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -55,12 +59,33 @@ fun App() {
                     AppNavigator(appState.navigator, homeContent = {
                         LoginScreen()
                     }, destinationContent = { destination ->
+                        val currentUserState = appState.currentUserState
+
                         when (destination) {
                             is LoginPageDestination -> LoginScreen()
-                            is AppointmentPageDestination -> AppointmentScreen()
-                            is AddSellPageDestination -> AddSellScreen()
-                            is DataPageDestination -> AppointmentListScreen(onAppointmentClick = { })
                             is ProfilePageDestination -> ProfileScreen()
+
+                            is MeetingPageDestination -> {
+                                when (currentUserState) {
+                                    UserState.ThirdParty -> ThirdPartyMeetingScreen()
+                                    else -> DefaultMeetingScreen()
+                                }
+                            }
+
+                            is AddSellPageDestination -> {
+                                when (currentUserState) {
+                                    UserState.Admin -> AdminAddSellScreen()
+                                    else -> AddSellScreen()
+                                }
+                            }
+
+                            is DataPageDestination -> {
+                                when (currentUserState) {
+                                    UserState.Admin -> AdminDataScreen()
+                                    else -> DefaultDataScreen()
+                                }
+                            }
+
                             else -> HomeScreen()
                         }
                     })

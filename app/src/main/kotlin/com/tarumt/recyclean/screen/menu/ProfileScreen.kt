@@ -1,4 +1,4 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.menu
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

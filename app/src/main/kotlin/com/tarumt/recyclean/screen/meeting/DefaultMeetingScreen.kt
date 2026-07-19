@@ -1,4 +1,4 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.meeting
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -7,6 +7,6 @@ import com.tarumt.recyclean.util.DrawTemplate
 
 @Composable
 @Preview
-fun AppointmentScreen() = DrawTemplate {
+fun DefaultMeetingScreen() = DrawTemplate {
     Text(text = "Test Appointment")
 }

@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.tarumt.recyclean.navigation.NavigatorState
-import com.tarumt.recyclean.screen.SalvageablePart
+import com.tarumt.recyclean.screen.addsell.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User

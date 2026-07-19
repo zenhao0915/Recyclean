@@ -1,4 +1,4 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.menu
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,6 +56,7 @@ import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
+import com.tarumt.recyclean.screen.addsell.convertToPart
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Grade

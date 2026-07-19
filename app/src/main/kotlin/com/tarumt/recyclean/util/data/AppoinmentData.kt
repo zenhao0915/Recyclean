@@ -1,6 +1,6 @@
 package com.tarumt.recyclean.util.data
 
-import com.tarumt.recyclean.screen.SalvageablePart
+import com.tarumt.recyclean.screen.addsell.SalvageablePart
 
 data class Appointment(
     val appointmentId: String,

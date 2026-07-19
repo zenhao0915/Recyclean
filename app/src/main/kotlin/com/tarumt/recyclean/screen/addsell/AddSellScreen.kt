@@ -1,7 +1,6 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.addsell
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

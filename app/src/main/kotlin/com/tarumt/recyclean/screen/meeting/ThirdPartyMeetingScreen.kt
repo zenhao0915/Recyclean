@@ -1,4 +1,4 @@
-package com.tarumt.recyclean.screen
+package com.tarumt.recyclean.screen.meeting
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
@@ -43,19 +43,17 @@ import com.tarumt.recyclean.util.data.Appointment
 
 @Preview(showBackground = true, name = "Appointment List Preview")
 @Composable
-fun AppointmentListScreenPreview() {
+fun ThirdPartyMeetingScreenPreview() {
     MaterialTheme {
-        AppointmentListScreen(
-            onAppointmentClick = { }
-        )
+        ThirdPartyMeetingScreen()
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentListScreen(
+fun ThirdPartyMeetingScreen(
     appointments: List<Appointment> = appState.pendingAppointments,
-    onAppointmentClick: (String) -> Unit
+    onAppointmentClick: (String) -> Unit = { }
 ) {
     Scaffold(
         topBar = {
