@@ -1,7 +1,6 @@
 package com.tarumt.recyclean.screen.addsell
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
@@ -42,7 +41,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,9 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
-import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.bronzeColor
 import com.tarumt.recyclean.common.defaultFont
@@ -74,10 +69,6 @@ import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.AppointmentStatus
 import com.tarumt.recyclean.util.data.Sellers
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
 
 data class SalvageablePart(
     val name: String, val estimatedPrice: Double, var isSelected: Boolean = false
@@ -92,74 +83,15 @@ fun String.convertToPart() = appState.apply {
 @Composable
 @Preview
 fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
-    val coroutineScope = rememberCoroutineScope()
     val sellerRowScrollState = rememberScrollState()
 
     var manualInput by remember(appState.deviceToSell) { mutableStateOf(appState.deviceToSell ?: "") }
-
-    var isAnalyzing by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-
-    val geminiModel = remember {
-        GenerativeModel(modelName = "gemini-3.1-flash-lite", apiKey = api_key)
-    }
-
-    val baseAiPrompt = """
-        You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
-        Analyze the provided input (image or text) and identify the device.
-        List exactly 3 to 10 valuable, functional salvageable parts/components that can be extracted from this device to be sold to third-party repair shops.
-        Estimate a reasonable market recycling value for each part in Malaysian Ringgit (RM).
-        
-        CRITICAL REQUIREMENT: You must reply ONLY with a valid JSON array. Do NOT wrap it in ```json ... ``` blocks, do NOT write introductory or concluding text.
-        Format example:
-        [
-          {"name": "A15 Bionic Motherboard (Motherboard)", "price": 320.0},
-          {"name": "OLED Screen Panel (Screen)", "price": 180.5}
-        ]
-    """.trimIndent()
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            appState.cachedBitmap = bitmap
-            errorMessage = ""
-            coroutineScope.launch {
-                isAnalyzing = true
-                appState.showResult = false
-
-                try {
-                    val response = withContext(Dispatchers.IO) {
-                        geminiModel.generateContent(
-                            content {
-                                image(bitmap)
-                                text(baseAiPrompt)
-                            })
-                    }
-
-                    val jsonResult = response.text ?: ""
-                    Log.d("GeminiAI", "Raw Response: $jsonResult")
-
-                    appState.cachedPartList.clear()
-                    val jsonArray = JSONArray(jsonResult.trim())
-                    for (i in 0 until jsonArray.length()) {
-                        val obj = jsonArray.getJSONObject(i)
-                        appState.cachedPartList.add(
-                            SalvageablePart(
-                                name = obj.getString("name"),
-                                estimatedPrice = obj.getDouble("price")
-                            )
-                        )
-                    }
-                    appState.detectedDeviceName = "Detected Smart Device"
-                    appState.showResult = true
-                } catch (e: Exception) {
-                    Log.e("GeminiAI", "Error calling API", e)
-                    errorMessage = "AI Analysis Failed: Please try again."
-                } finally {
-                    isAnalyzing = false
-                }
-            }
+            viewModel.analyzeDeviceImage(bitmap)
         }
     }
 
@@ -265,42 +197,7 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
 
         if (manualInput.isNotEmpty() && appState.cachedBitmap == null) {
             Button(
-                onClick = {
-                    errorMessage = ""
-                    coroutineScope.launch {
-                        isAnalyzing = true
-                        appState.showResult = false
-                        try {
-                            val response = withContext(Dispatchers.IO) {
-                                geminiModel.generateContent(
-                                    "$baseAiPrompt\n\nUser Inputted Device Model: $manualInput"
-                                )
-                            }
-
-                            val jsonResult = response.text ?: ""
-                            Log.d("GeminiAI", "Raw Response: $jsonResult")
-
-                            appState.cachedPartList.clear()
-                            val jsonArray = JSONArray(jsonResult.trim())
-                            for (i in 0 until jsonArray.length()) {
-                                val obj = jsonArray.getJSONObject(i)
-                                appState.cachedPartList.add(
-                                    SalvageablePart(
-                                        name = obj.getString("name"),
-                                        estimatedPrice = obj.getDouble("price")
-                                    )
-                                )
-                            }
-                            appState.detectedDeviceName = manualInput
-                            appState.showResult = true
-                        } catch (e: Exception) {
-                            Log.e("GeminiAI", "Error calling API", e)
-                            errorMessage = "AI Parsing Failed: Check text input or connection."
-                        } finally {
-                            isAnalyzing = false
-                        }
-                    }
-                },
+                onClick = { viewModel.analyzeDeviceText(manualInput) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -309,11 +206,11 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
             }
         }
 
-        if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = Color.Red, fontSize = 13.sp, fontFamily = defaultFont)
+        if (viewModel.errorMessage.isNotEmpty()) {
+            Text(text = viewModel.errorMessage, color = Color.Red, fontSize = 13.sp, fontFamily = defaultFont)
         }
 
-        AnimatedVisibility(visible = isAnalyzing) {
+        AnimatedVisibility(visible = viewModel.isAnalyzing) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(vertical = 10.dp)
