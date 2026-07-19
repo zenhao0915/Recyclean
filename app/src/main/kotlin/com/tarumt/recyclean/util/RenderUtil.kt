@@ -72,6 +72,9 @@ import com.tarumt.recyclean.util.data.Grade
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+
+enum class WindowWidthSizeClass { Compact, Medium, Expanded }
+
 @Composable
 fun DrawTemplate(contentAlignment: Alignment = Alignment.TopCenter, value: @Composable () -> Unit) =
     Box(
@@ -147,194 +150,191 @@ fun GlassBox(
 
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
-fun DrawNavigator() =
-    Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.background(color = Color.Transparent)) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .padding(4.dp)
-                .background(color = Color.Transparent, shape = CircleShape)
-                .border(
-                    width = 0.5.dp, color = Color.Gray.copy(0.4f), shape = CircleShape
-                )
+fun DrawNavigator() = Box(
+    contentAlignment = Alignment.BottomCenter,
+    modifier = Modifier.background(color = Color.Transparent)
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .padding(4.dp)
+            .background(color = Color.Transparent, shape = CircleShape)
+            .border(
+                width = 0.5.dp, color = Color.Gray.copy(0.4f), shape = CircleShape
+            )
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart
         ) {
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart
-            ) {
-                val density = LocalDensity.current
-                val tabCount = Navigations.entries.size
-                val selectedIndex =
-                    Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
-                val tabWidth = maxWidth / tabCount
+            val density = LocalDensity.current
+            val tabCount = Navigations.entries.size
+            val selectedIndex =
+                Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
+            val tabWidth = maxWidth / tabCount
 
-                var isDragging by remember { mutableStateOf(false) }
-                var dragOffsetPx by remember { mutableFloatStateOf(0f) }
+            var isDragging by remember { mutableStateOf(false) }
+            var dragOffsetPx by remember { mutableFloatStateOf(0f) }
 
-                val tabWidthPx = density.run { tabWidth.toPx() }
-                val maxOffsetPx = tabWidthPx * (tabCount - 1)
-                val snappedOffsetDp = if (selectedIndex >= 0) tabWidth * selectedIndex else 0.dp
-                val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
+            val tabWidthPx = density.run { tabWidth.toPx() }
+            val maxOffsetPx = tabWidthPx * (tabCount - 1)
+            val snappedOffsetDp = if (selectedIndex >= 0) tabWidth * selectedIndex else 0.dp
+            val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
 
-                val targetOffsetDp = if (isDragging) {
-                    density.run { dragOffsetPx.toDp() }
-                } else {
-                    snappedOffsetDp
-                }
-                val animatedPillOffset by animateDpAsState(
-                    targetValue = targetOffsetDp,
-                    animationSpec = if (isDragging) snap() else spring(
-                        dampingRatio = 0.6f, stiffness = 800f
-                    ),
-                    label = "SlidingPillOffset"
-                )
+            val targetOffsetDp = if (isDragging) {
+                density.run { dragOffsetPx.toDp() }
+            } else {
+                snappedOffsetDp
+            }
+            val animatedPillOffset by animateDpAsState(
+                targetValue = targetOffsetDp, animationSpec = if (isDragging) snap() else spring(
+                    dampingRatio = 0.6f, stiffness = 800f
+                ), label = "SlidingPillOffset"
+            )
 
-                val currentEstimatedIndex = if (isDragging) {
-                    (dragOffsetPx / tabWidthPx).roundToInt().coerceIn(0, tabCount - 1)
-                } else {
-                    selectedIndex
-                }
-                val isOverCenter = currentEstimatedIndex == tabCount / 2
+            val currentEstimatedIndex = if (isDragging) {
+                (dragOffsetPx / tabWidthPx).roundToInt().coerceIn(0, tabCount - 1)
+            } else {
+                selectedIndex
+            }
+            val isOverCenter = currentEstimatedIndex == tabCount / 2
 
-                val pillAlpha by animateFloatAsState(
-                    targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
-                    animationSpec = spring(dampingRatio = 0.65f),
-                    label = "PillAlpha"
-                )
+            val pillAlpha by animateFloatAsState(
+                targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
+                animationSpec = spring(dampingRatio = 0.65f),
+                label = "PillAlpha"
+            )
 
-                val modifierWithGestures =
-                    Modifier
-                        .fillMaxWidth()
-                        .pointerInput(tabCount, selectedIndex, snappedOffsetPx) {
-                            val swipeThresholdPx = 10f
-                            awaitPointerEventScope {
+            val modifierWithGestures =
+                Modifier
+                    .fillMaxWidth()
+                    .pointerInput(tabCount, selectedIndex, snappedOffsetPx) {
+                        val swipeThresholdPx = 10f
+                        awaitPointerEventScope {
+                            while (true) {
+                                val down = awaitPointerEvent(PointerEventPass.Main)
+                                val downChange =
+                                    down.changes.firstOrNull()?.takeIf { it.pressed } ?: continue
+
+                                val startX = downChange.position.x
+                                val pointerId = downChange.id
+                                var hasMoved = false
+
+                                dragOffsetPx = snappedOffsetPx
+
                                 while (true) {
-                                    val down = awaitPointerEvent(PointerEventPass.Main)
-                                    val downChange =
-                                        down.changes.firstOrNull()?.takeIf { it.pressed }
-                                            ?: continue
+                                    val nextEvent = awaitPointerEvent(PointerEventPass.Main)
+                                    val change =
+                                        nextEvent.changes.firstOrNull { it.id == pointerId }
+                                    if (change == null || change.isConsumed) {
+                                        isDragging = false
+                                        break
+                                    }
 
-                                    val startX = downChange.position.x
-                                    val pointerId = downChange.id
-                                    var hasMoved = false
-
-                                    dragOffsetPx = snappedOffsetPx
-
-                                    while (true) {
-                                        val nextEvent = awaitPointerEvent(PointerEventPass.Main)
-                                        val change =
-                                            nextEvent.changes.firstOrNull { it.id == pointerId }
-                                        if (change == null || change.isConsumed) {
-                                            isDragging = false
-                                            break
+                                    if (change.pressed) {
+                                        val deltaX = change.position.x - startX
+                                        if (!hasMoved && abs(deltaX) > swipeThresholdPx) {
+                                            isDragging = true
+                                            hasMoved = true
                                         }
 
-                                        if (change.pressed) {
-                                            val deltaX = change.position.x - startX
-                                            if (!hasMoved && abs(deltaX) > swipeThresholdPx) {
-                                                isDragging = true
-                                                hasMoved = true
-                                            }
+                                        if (isDragging) {
+                                            dragOffsetPx = (snappedOffsetPx + deltaX).coerceIn(
+                                                0f, maxOffsetPx
+                                            )
+                                            change.consume()
+                                        }
+                                    } else {
+                                        if (isDragging) {
+                                            isDragging = false
+                                            val targetIndex =
+                                                (dragOffsetPx / tabWidthPx).roundToInt()
+                                                    .coerceIn(0, tabCount - 1)
+                                            val targetNav = Navigations.entries[targetIndex]
 
-                                            if (isDragging) {
-                                                dragOffsetPx = (snappedOffsetPx + deltaX).coerceIn(
-                                                    0f, maxOffsetPx
+                                            if (targetNav.navDestination != appState.navigator.current) {
+                                                appState.navigator.navigateTo(
+                                                    targetNav.navDestination, Offset.Zero
                                                 )
-                                                change.consume()
                                             }
                                         } else {
-                                            if (isDragging) {
-                                                isDragging = false
-                                                val targetIndex =
-                                                    (dragOffsetPx / tabWidthPx).roundToInt()
-                                                        .coerceIn(0, tabCount - 1)
-                                                val targetNav = Navigations.entries[targetIndex]
+                                            val clickIndex = (startX / tabWidthPx).toInt()
+                                                .coerceIn(0, tabCount - 1)
+                                            val targetNav = Navigations.entries[clickIndex]
 
-                                                if (targetNav.navDestination != appState.navigator.current) {
-                                                    appState.navigator.navigateTo(
-                                                        targetNav.navDestination, Offset.Zero
-                                                    )
-                                                }
-                                            } else {
-                                                val clickIndex = (startX / tabWidthPx).toInt()
-                                                    .coerceIn(0, tabCount - 1)
-                                                val targetNav = Navigations.entries[clickIndex]
-
-                                                if (targetNav.navDestination != appState.navigator.current) {
-                                                    appState.navigator.navigateTo(
-                                                        targetNav.navDestination, Offset.Zero
-                                                    )
-                                                }
+                                            if (targetNav.navDestination != appState.navigator.current) {
+                                                appState.navigator.navigateTo(
+                                                    targetNav.navDestination, Offset.Zero
+                                                )
                                             }
-                                            break
                                         }
+                                        break
                                     }
                                 }
                             }
                         }
+                    }
 
+            Box(
+                modifier = modifierWithGestures, contentAlignment = Alignment.CenterStart
+            ) {
                 Box(
-                    modifier = modifierWithGestures, contentAlignment = Alignment.CenterStart
+                    modifier = Modifier
+                        .offset(x = animatedPillOffset)
+                        .width(tabWidth)
+                        .height(56.dp)
+                        .graphicsLayer { alpha = pillAlpha }, contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .offset(x = animatedPillOffset)
-                            .width(tabWidth)
-                            .height(56.dp)
-                            .graphicsLayer { alpha = pillAlpha },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(68.dp)
-                                .height(55.dp)
-                                .background(
-                                    color = Color(0xFFFF3B30).copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
-                        )
-                    }
+                            .width(68.dp)
+                            .height(55.dp)
+                            .background(
+                                color = Color(0xFFFF3B30).copy(alpha = 0.15f), shape = CircleShape
+                            )
+                    )
+                }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 10.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(tabCount) { i ->
-                            val isCenterElement = i == tabCount / 2
-                            val currentNav = Navigations.entries[i]
-                            val isSelected = currentNav.navDestination == appState.navigator.current
-                            val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(tabCount) { i ->
+                        val isCenterElement = i == tabCount / 2
+                        val currentNav = Navigations.entries[i]
+                        val isSelected = currentNav.navDestination == appState.navigator.current
+                        val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
 
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    modifier = Modifier
-                                        .offset(y = if (isCenterElement) (-28).dp else 0.dp)
-                                        .size(if (isCenterElement) 36.dp else 24.dp),
-                                    imageVector = currentNav.icons,
-                                    contentDescription = currentNav.name,
-                                    tint = itemColor
-                                )
-                                Text(
-                                    modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
-                                    text = currentNav.name,
-                                    fontFamily = defaultFont,
-                                    fontSize = defaultFontSize,
-                                    color = itemColor,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .offset(y = if (isCenterElement) (-28).dp else 0.dp)
+                                    .size(if (isCenterElement) 36.dp else 24.dp),
+                                imageVector = currentNav.icons,
+                                contentDescription = currentNav.name,
+                                tint = itemColor
+                            )
+                            Text(
+                                modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
+                                text = currentNav.name,
+                                fontFamily = defaultFont,
+                                fontSize = defaultFontSize,
+                                color = itemColor,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
                         }
                     }
                 }
             }
         }
     }
+}
 
 @Composable
 @Preview
@@ -373,7 +373,8 @@ fun DrawResultBox(
         )
         // Grade
         Row(
-            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (sellerGrade != Grade.GG) DrawGradeBox(sellerGrade)
 
