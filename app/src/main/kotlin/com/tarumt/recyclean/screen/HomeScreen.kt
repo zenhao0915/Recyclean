@@ -369,7 +369,7 @@ fun HomeScreen() {
                             .padding(16.dp)
                             .background(color = Color.White, shape = RoundedCornerShape(16.dp))
                             .border(
-                                color = Color.Black, width = 1.dp, shape = RoundedCornerShape(16.dp)
+                                color = Color.Black, width = 0.5.dp, shape = RoundedCornerShape(16.dp)
                             )
                     ) {
                         Row(
@@ -434,7 +434,7 @@ fun HomeScreen() {
                                         image = painterResource(device.icon),
                                         maxWidth = 100,
                                         maxHeight = 160,
-                                        textmaxWidth = 60
+                                        textmaxWidth = 80
                                     ) {
                                         device.deviceName.convertToPart()
                                     }
