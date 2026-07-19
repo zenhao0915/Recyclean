@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,7 @@ fun App() {
                     }
                 }
         ) {
-            Scaffold(bottomBar = {
+            Scaffold(containerColor = Color.White, bottomBar = {
                 // Navigator
                 if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
             }, floatingActionButton = {}) { innerPadding ->
