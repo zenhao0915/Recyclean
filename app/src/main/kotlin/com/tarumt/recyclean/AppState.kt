@@ -16,8 +16,7 @@ import com.tarumt.recyclean.util.data.UserState
 class AppState {
     var currentUser by mutableStateOf<User?>(null)
     var currentUserState by mutableStateOf(UserState.Normal)
-    val hasLoggedIn: Boolean
-        get() = currentUser?.isValidUser ?: false
+
     val navigator = NavigatorState()
     var lastTouchOffset by mutableStateOf(Offset.Zero)
 
