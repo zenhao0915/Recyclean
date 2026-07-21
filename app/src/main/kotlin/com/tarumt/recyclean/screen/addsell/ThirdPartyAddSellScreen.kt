@@ -5,6 +5,6 @@ import androidx.compose.runtime.Composable
 import com.tarumt.recyclean.util.DrawTemplate
 
 @Composable
-fun AdminAddSellScreen() = DrawTemplate {
+fun ThirdPartyAddSellScreen() = DrawTemplate {
     Text(text = "Test AdminAddSell")
 }

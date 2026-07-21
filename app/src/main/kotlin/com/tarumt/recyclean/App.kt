@@ -21,7 +21,7 @@ import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.navigation.ProfilePageDestination
 import com.tarumt.recyclean.screen.addsell.AddSellScreen
-import com.tarumt.recyclean.screen.addsell.AdminAddSellScreen
+import com.tarumt.recyclean.screen.addsell.ThirdPartyAddSellScreen
 import com.tarumt.recyclean.screen.data.AdminDataScreen
 import com.tarumt.recyclean.screen.data.DefaultDataScreen
 import com.tarumt.recyclean.screen.meeting.DefaultMeetingScreen
@@ -55,7 +55,13 @@ fun App() {
                 // Navigator
                 if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
             }, floatingActionButton = {}) { innerPadding ->
-                Box(modifier = Modifier.padding(if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(0.dp))) {
+                Box(
+                    modifier = Modifier.padding(
+                        if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(
+                            0.dp
+                        )
+                    )
+                ) {
                     AppNavigator(appState.navigator, homeContent = {
                         LoginScreen()
                     }, destinationContent = { destination ->
@@ -74,7 +80,7 @@ fun App() {
 
                             is AddSellPageDestination -> {
                                 when (currentUserState) {
-                                    UserState.Admin -> AdminAddSellScreen()
+                                    UserState.ThirdParty -> ThirdPartyAddSellScreen()
                                     else -> AddSellScreen()
                                 }
                             }
