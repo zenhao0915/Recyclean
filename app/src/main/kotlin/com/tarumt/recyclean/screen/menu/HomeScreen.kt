@@ -62,6 +62,7 @@ import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Grade
 import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
+import com.tarumt.recyclean.util.data.UserState
 
 @Composable
 @Preview
@@ -194,8 +195,10 @@ fun HomeScreen() {
                                         indication = null,
                                         onClick = {
                                             /* Jump To Items Selection Here */
-                                            drawPopup = true
-                                            currentProductSelected = currentProduct
+                                            if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
+                                                drawPopup = true
+                                                currentProductSelected = currentProduct
+                                            }
                                         }),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center

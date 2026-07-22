@@ -63,7 +63,7 @@ import com.tarumt.recyclean.common.lightBlueColor
 import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.navigation.AddSellPageDestination
-import com.tarumt.recyclean.navigation.DataPageDestination
+import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Appointment
@@ -365,7 +365,7 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                             )
 
                             appState.pendingAppointments.add(newAppointment)
-                            appState.navigator.navigateTo(DataPageDestination, appState.lastTouchOffset)
+                            appState.navigator.navigateTo(MeetingPageDestination, appState.lastTouchOffset)
 
                             appState.cachedBitmap = null
                             manualInput = ""
@@ -379,7 +379,7 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Publish to Auction Pool (发布竞价)",
+                        text = "Assign To Seller",
                         fontFamily = defaultFont,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
