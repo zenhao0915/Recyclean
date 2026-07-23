@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.util.data.Appointment
 
@@ -52,11 +53,13 @@ fun ThirdPartyMeetingScreenPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThirdPartyMeetingScreen(
+    viewModel: ThirdPartyMeetingViewModel = viewModel(),
     appointments: List<Appointment> = appState.pendingAppointments,
     onAppointmentClick: (String) -> Unit = { }
 ) {
     Scaffold(
         topBar = {
+
             TopAppBar(
                 title = { Text("Pending Appointments", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
