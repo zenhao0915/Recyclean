@@ -14,6 +14,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.navigation.VerificationPageDestination
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.AppNavigator
 import com.tarumt.recyclean.navigation.DataPageDestination
@@ -26,6 +27,7 @@ import com.tarumt.recyclean.screen.data.AdminDataScreen
 import com.tarumt.recyclean.screen.data.DefaultDataScreen
 import com.tarumt.recyclean.screen.meeting.DefaultMeetingScreen
 import com.tarumt.recyclean.screen.meeting.ThirdPartyMeetingScreen
+import com.tarumt.recyclean.screen.meeting.ThirdPartyVerificationScreen
 import com.tarumt.recyclean.screen.menu.HomeScreen
 import com.tarumt.recyclean.screen.menu.LoginScreen
 import com.tarumt.recyclean.screen.menu.ProfileScreen
@@ -70,6 +72,13 @@ fun App() {
                         when (destination) {
                             is LoginPageDestination -> LoginScreen()
                             is ProfilePageDestination -> ProfileScreen()
+
+                            is VerificationPageDestination -> {
+                                // Uses the temporary holding variable you created to pass data to the screen
+                                appState.currentVerificationAppointment?.let { appt ->
+                                    ThirdPartyVerificationScreen(appointment = appt)
+                                }
+                            }
 
                             is MeetingPageDestination -> {
                                 when (currentUserState) {

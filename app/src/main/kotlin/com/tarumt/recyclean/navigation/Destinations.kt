@@ -14,6 +14,7 @@ data object MeetingPageDestination : NavDestination()
 data object AddSellPageDestination : NavDestination()
 data object DataPageDestination : NavDestination()
 data object ProfilePageDestination : NavDestination()
+data object VerificationPageDestination : NavDestination()
 
 enum class Navigations(val icons: ImageVector, val navDestination: NavDestination) {
     Home(Icons.Default.Home, HomePageDestination),

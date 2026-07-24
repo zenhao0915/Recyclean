@@ -1,6 +1,7 @@
 package com.tarumt.recyclean.screen.meeting
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,15 +18,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -55,11 +63,10 @@ fun ThirdPartyMeetingScreenPreview() {
 fun ThirdPartyMeetingScreen(
     viewModel: ThirdPartyMeetingViewModel = viewModel(),
     appointments: List<Appointment> = appState.pendingAppointments,
-    onAppointmentClick: (String) -> Unit = { }
+    onAppointmentClick: (String) -> Unit = { viewModel.openApprovalDialog(it) }
 ) {
     Scaffold(
         topBar = {
-
             TopAppBar(
                 title = { Text("Pending Appointments", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -85,6 +92,91 @@ fun ThirdPartyMeetingScreen(
             }
         }
     }
+
+    // --- POP-UP SCREEN UI ---
+    viewModel.selectedAppointment?.let { appt ->
+        AlertDialog(
+            onDismissRequest = { viewModel.closeApprovalDialog() },
+            containerColor = Color.White,
+            title = {
+                Text(
+                    text = "Appointment Approval",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                // Added a verticalScroll here in case the AI returns a very long list of parts
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier.verticalScroll(scrollState),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "Device: ${appt.deviceName}", fontWeight = FontWeight.SemiBold)
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
+
+                    Text(text = "Spare Parts Requested:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+
+                    appt.selectedParts.forEach { part ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top // Ensures alignment stays at the top if text wraps
+                        ) {
+                            Text(
+                                text = "- ${part.name}",
+                                fontSize = 13.sp,
+                                modifier = Modifier
+                                    .weight(1f) // FIX: This forces the long text to wrap instead of pushing the price off-screen
+                                    .padding(end = 12.dp) // FIX: Adds a small gap between the name and the price
+                            )
+                            Text(
+                                text = String.format("RM %.2f", part.estimatedPrice),
+                                fontSize = 13.sp,
+                                maxLines = 1 // FIX: Forces the price to remain on a single line
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Total:", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = String.format("RM %.2f", appt.estimatedValue),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF2E7D32)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.approveAppointment(appt) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF466EF2)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Approve", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { viewModel.rejectAppointment(appt) },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                    border = BorderStroke(1.dp, Color.Red),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Reject", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
 }
 
 @SuppressLint("DefaultLocale")
@@ -105,7 +197,6 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Left side: Details
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = appointment.deviceName,
@@ -136,12 +227,10 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                 }
             }
 
-            // Right side: Price and Arrow
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Formatted price string
                 Text(
                     text = String.format("RM %.2f", appointment.estimatedValue),
                     fontWeight = FontWeight.ExtraBold,
@@ -149,7 +238,6 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                     color = Color(0xFF2E7D32)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // Status Badge
                 Box(
                     modifier = Modifier
                         .background(

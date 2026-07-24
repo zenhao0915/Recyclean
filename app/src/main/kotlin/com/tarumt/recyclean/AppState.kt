@@ -27,6 +27,9 @@ class AppState {
     val cachedPartList = mutableStateListOf<SalvageablePart>()
     var selectedSeller by mutableStateOf(Sellers.SenHeng)
 
+    // for verification screen I add here
+    var currentVerificationAppointment by mutableStateOf<Appointment?>(null)
+
     val pendingAppointments = mutableStateListOf<Appointment>()
 
     init {
