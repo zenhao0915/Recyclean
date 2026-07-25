@@ -47,8 +47,6 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.greenCyanColor
 import com.tarumt.recyclean.common.skyBlueColor
-import com.tarumt.recyclean.navigation.HomePageDestination
-import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.WindowWidthSizeClass
 import com.tarumt.recyclean.util.data.UserState
@@ -234,8 +232,8 @@ fun LoginFormFields(
             modifier = Modifier
                 .width(120.dp)
                 .height(45.dp)
-                //.navReveal(appState.navigator, HomePageDestination)
                 .background(color = greenCyanColor, shape = CircleShape)
+                .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
                     viewModel.processRegisterUser(userName)
                 }),
@@ -258,8 +256,15 @@ fun LoginFormFields(
             modifier = Modifier
                 .width(120.dp)
                 .height(45.dp)
-                .navReveal(appState.navigator, HomePageDestination)
-                .background(color = skyBlueColor, shape = CircleShape),
+                .background(color = skyBlueColor, shape = CircleShape)
+                .clip(CircleShape)
+                .clickable(enabled = true, onClick = {
+                    viewModel.processUserLogin(
+                        userName,
+                        password,
+                        userState = appState.currentUserState
+                    )
+                }),
             shape = CircleShape,
             isDarkTheme = true,
             contentAlignment = Alignment.Center

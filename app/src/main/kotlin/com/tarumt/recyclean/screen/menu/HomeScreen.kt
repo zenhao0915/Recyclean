@@ -56,6 +56,7 @@ import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.navReveal
+import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.convertToPart
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
@@ -63,6 +64,7 @@ import com.tarumt.recyclean.util.data.Grade
 import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.UserState
+import kotlin.random.Random
 
 @Composable
 @Preview
@@ -310,7 +312,9 @@ fun HomeScreen() {
                                     .offset(x = 60.dp), thickness = 1.dp, color = Color.Gray
                             )
                             Text(
-                                modifier = Modifier.offset(x = 60.dp),
+                                modifier = Modifier.offset(x = 60.dp).clickable(true, onClick = {
+                                    NotificationManager.addToast("WALAO EH JOIS", isSuccess = Random.nextBoolean())
+                                }),
                                 text = "Redeem",
                                 fontFamily = defaultFont,
                                 fontSize = 16.sp,

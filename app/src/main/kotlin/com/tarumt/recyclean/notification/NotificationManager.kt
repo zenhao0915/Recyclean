@@ -25,8 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.R
+import com.tarumt.recyclean.common.defaultFont
+import com.tarumt.recyclean.common.defaultFontSize
 import kotlinx.coroutines.delay
 import java.util.PriorityQueue
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,9 +43,9 @@ object NotificationManager {
         private set
     var lastNotification by mutableStateOf<Notification?>(null)
         private set
-    private var hasInit = false
+    private var hasInit by mutableStateOf(false)
 
-    fun addToast(message: String, isSuccess: Boolean = false, prio: Boolean = false) {
+    fun addToast(message: String, isSuccess: Boolean = true, prio: Boolean = false) {
         notificationQueue.add(Notification(message, isSuccess, if (prio) Int.MAX_VALUE else 0))
     }
 
@@ -82,27 +86,36 @@ object NotificationManager {
             ) {
                 Box(
                     modifier = Modifier
-                        .padding(8.dp)
-                        .background(color = Color.Transparent, shape = CircleShape)
+                        .background(color = Color.Black.copy(alpha = 0.9f), shape = CircleShape)
                         .border(
                             width = 0.5.dp,
-                            color = Color.Black.copy(alpha = 0.3f),
+                            color = Color.Black.copy(alpha = 0.4f),
                             shape = CircleShape
                         )
                 ) {
                     Row(
+                        modifier = Modifier.padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(
-                            8.dp,
+                            4.dp,
                             Alignment.CenterHorizontally
                         )
                     ) {
                         displayNotification?.let { notification ->
                             Icon(
                                 painterResource(if (notification.isSuccess) R.drawable.check_circle else R.drawable.error),
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = if (notification.isSuccess) Color.Green else Color.Red
                             )
-                            Text(text = notification.message)
+                            Text(
+                                text = notification.message,
+                                fontFamily = defaultFont,
+                                fontSize = defaultFontSize,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = Color.White
+                            )
                         }
                     }
                 }
