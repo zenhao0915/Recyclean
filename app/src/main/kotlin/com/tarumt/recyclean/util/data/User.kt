@@ -1,11 +1,11 @@
 package com.tarumt.recyclean.util.data
 
-class User(val userName: String, password: String, var currentUserState: UserState = UserState.Normal) {
+class User(val userName: String, password: Int, var currentUserState: UserState = UserState.Normal) {
     val isAdmin: Boolean
         get() = currentUserState == UserState.Admin
 
     val isValidUser: Boolean
-        get() = true
+        get() = true // Check With Firebase
 
     val hasLoggedIn: Boolean
         get() = isValidUser

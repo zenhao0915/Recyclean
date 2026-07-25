@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
+import com.tarumt.recyclean.common.appState
 import kotlin.math.sqrt
 
 sealed class NavDestination
@@ -32,6 +33,7 @@ class NavigatorState {
 
     fun navigateHome() {
         current = null
+        revealOrigin = appState.lastTouchOffset
     }
 }
 

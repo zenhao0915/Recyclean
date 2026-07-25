@@ -1,6 +1,7 @@
 package com.tarumt.recyclean
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -21,6 +24,7 @@ import com.tarumt.recyclean.navigation.DataPageDestination
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.navigation.ProfilePageDestination
+import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.AddSellScreen
 import com.tarumt.recyclean.screen.addsell.ThirdPartyAddSellScreen
 import com.tarumt.recyclean.screen.data.AdminDataScreen
@@ -37,6 +41,8 @@ import com.tarumt.recyclean.util.data.UserState
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App() {
+    appState.scope = rememberCoroutineScope()
+    NotificationManager.UpdateNotification()
     MaterialTheme {
         Box(
             modifier = Modifier
@@ -104,6 +110,7 @@ fun App() {
                             else -> HomeScreen()
                         }
                     })
+                    NotificationManager.CallToast()
                 }
             }
         }

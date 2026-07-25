@@ -12,8 +12,11 @@ import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserState
+import kotlinx.coroutines.CoroutineScope
 
 class AppState {
+    lateinit var scope: CoroutineScope
+
     var currentUser by mutableStateOf<User?>(null)
     var currentUserState by mutableStateOf(UserState.Normal)
 
@@ -33,7 +36,7 @@ class AppState {
     val pendingAppointments = mutableStateListOf<Appointment>()
 
     init {
-        currentUser = User("test", "test")
+        currentUser = User("test", 1234)
         currentUserState = currentUser?.currentUserState ?: UserState.Normal
         print("AppState Init")
     }

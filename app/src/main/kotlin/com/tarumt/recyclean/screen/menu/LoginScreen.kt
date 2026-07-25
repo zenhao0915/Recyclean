@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.defaultBoldFont
@@ -55,99 +56,103 @@ import com.tarumt.recyclean.util.data.UserState
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 @Preview
-fun LoginScreen() = Box(contentAlignment = Alignment.Center) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp
+fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
+    Box(contentAlignment = Alignment.Center) {
+        val configuration = LocalConfiguration.current
+        val screenWidth = configuration.screenWidthDp
 
-    val windowSizeClass = when {
-        screenWidth < 600 -> WindowWidthSizeClass.Compact
-        screenWidth in 600..839 -> WindowWidthSizeClass.Medium
-        else -> WindowWidthSizeClass.Expanded
-    }
+        val windowSizeClass = when {
+            screenWidth < 600 -> WindowWidthSizeClass.Compact
+            screenWidth in 600..839 -> WindowWidthSizeClass.Medium
+            else -> WindowWidthSizeClass.Expanded
+        }
 
-    val isTablet = windowSizeClass != WindowWidthSizeClass.Compact
+        val isTablet = windowSizeClass != WindowWidthSizeClass.Compact
 
-    val cardWidth = if (isTablet) 680.dp else 320.dp
-    val cardHeight = if (isTablet) 420.dp else 500.dp
+        val cardWidth = if (isTablet) 680.dp else 320.dp
+        val cardHeight = if (isTablet) 420.dp else 500.dp
 
-    Image(
-        painter = painterResource(R.drawable.bg),
-        contentScale = ContentScale.Crop,
-        contentDescription = "Background",
-        modifier = Modifier.fillMaxSize()
-    )
+        Image(
+            painter = painterResource(R.drawable.bg),
+            contentScale = ContentScale.Crop,
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize()
+        )
 
-    val userName = rememberSaveable { mutableStateOf("") }
-    val password = rememberSaveable { mutableStateOf("") }
+        val userName = rememberSaveable { mutableStateOf("") }
+        val password = rememberSaveable { mutableStateOf("") }
 
-    GlassBox(
-        modifier = Modifier
-            .width(cardWidth)
-            .height(cardHeight),
-        borderWidth = 1.5.dp,
-        contentAlignment = Alignment.Center
-    ) {
-        if (isTablet) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 32.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(40.dp)
-            ) {
-                Box(
-                    modifier = Modifier.weight(1f), contentAlignment = Alignment.Center
+        GlassBox(
+            modifier = Modifier
+                .width(cardWidth)
+                .height(cardHeight),
+            borderWidth = 1.5.dp,
+            contentAlignment = Alignment.Center
+        ) {
+            if (isTablet) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(40.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.weight(1f), contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(200.dp)
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1.2f),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LoginFormFields(
+                            viewModel,
+                            userName = userName.value,
+                            onUserNameChange = { userName.value = it },
+                            password = password.value,
+                            onPasswordChange = { password.value = it })
+                    }
+                }
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
                     Image(
                         painter = painterResource(R.drawable.logo),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(200.dp)
+                        modifier = Modifier.height(150.dp)
                     )
-                }
 
-                Column(
-                    modifier = Modifier.weight(1.2f),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    LoginFormFields(
-                        userName = userName.value,
-                        onUserNameChange = { userName.value = it },
-                        password = password.value,
-                        onPasswordChange = { password.value = it })
-                }
-            }
-        } else {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 24.dp)
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.height(150.dp)
-                )
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    LoginFormFields(
-                        userName = userName.value,
-                        onUserNameChange = { userName.value = it },
-                        password = password.value,
-                        onPasswordChange = { password.value = it })
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LoginFormFields(
+                            viewModel,
+                            userName = userName.value,
+                            onUserNameChange = { userName.value = it },
+                            password = password.value,
+                            onPasswordChange = { password.value = it })
+                    }
                 }
             }
         }
     }
-}
 
 @Composable
 fun LoginFormFields(
+    viewModel: LoginViewModel,
     userName: String,
     onUserNameChange: (String) -> Unit,
     password: String,
@@ -229,8 +234,11 @@ fun LoginFormFields(
             modifier = Modifier
                 .width(120.dp)
                 .height(45.dp)
-                .navReveal(appState.navigator, HomePageDestination)
-                .background(color = greenCyanColor, shape = CircleShape),
+                //.navReveal(appState.navigator, HomePageDestination)
+                .background(color = greenCyanColor, shape = CircleShape)
+                .clickable(enabled = true, onClick = {
+                    viewModel.processRegisterUser(userName)
+                }),
             shape = CircleShape,
             isDarkTheme = true,
             contentAlignment = Alignment.Center
@@ -301,6 +309,9 @@ fun LoginFormFields(
     }
 
     Text(
+        modifier = Modifier.clickable {
+            viewModel.processForgetPassword()
+        },
         text = "Forgot Password?",
         fontFamily = defaultFont,
         fontSize = 12.sp,
