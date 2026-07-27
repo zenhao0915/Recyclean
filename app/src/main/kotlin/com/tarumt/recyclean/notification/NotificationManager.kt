@@ -45,8 +45,14 @@ object NotificationManager {
         private set
     private var hasInit by mutableStateOf(false)
 
-    fun addToast(message: String, isSuccess: Boolean = true, prio: Boolean = false) {
-        notificationQueue.add(Notification(message, isSuccess, if (prio) Int.MAX_VALUE else 0))
+    fun addToast(message: String, isSuccess: Boolean = true, isPriority: Boolean = false) {
+        notificationQueue.add(
+            Notification(
+                message,
+                isSuccess,
+                if (isPriority) Int.MAX_VALUE else 0
+            )
+        )
     }
 
     @Composable

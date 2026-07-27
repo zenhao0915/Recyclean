@@ -77,7 +77,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
             modifier = Modifier.fillMaxSize()
         )
 
-        val userName = rememberSaveable { mutableStateOf("") }
+        val email = rememberSaveable { mutableStateOf("") }
         val password = rememberSaveable { mutableStateOf("") }
 
         GlassBox(
@@ -113,8 +113,8 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                     ) {
                         LoginFormFields(
                             viewModel,
-                            userName = userName.value,
-                            onUserNameChange = { userName.value = it },
+                            email = email.value,
+                            onEmailChange = { email.value = it },
                             password = password.value,
                             onPasswordChange = { password.value = it })
                     }
@@ -138,8 +138,8 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                     ) {
                         LoginFormFields(
                             viewModel,
-                            userName = userName.value,
-                            onUserNameChange = { userName.value = it },
+                            email = email.value,
+                            onEmailChange = { email.value = it },
                             password = password.value,
                             onPasswordChange = { password.value = it })
                     }
@@ -151,12 +151,12 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
 @Composable
 fun LoginFormFields(
     viewModel: LoginViewModel,
-    userName: String,
-    onUserNameChange: (String) -> Unit,
+    email: String,
+    onEmailChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit
 ) {
-    // Username Input
+    //Email Input
     GlassBox(
         modifier = Modifier
             .width(250.dp)
@@ -166,11 +166,11 @@ fun LoginFormFields(
         contentAlignment = Alignment.CenterStart
     ) {
         TextField(
-            value = userName,
-            onValueChange = onUserNameChange,
+            value = email,
+            onValueChange = onEmailChange,
             placeholder = {
                 Text(
-                    text = "Username/Email",
+                    text = "Email",
                     fontFamily = defaultFont,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -235,7 +235,7 @@ fun LoginFormFields(
                 .background(color = greenCyanColor, shape = CircleShape)
                 .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
-                    viewModel.processRegisterUser(userName)
+                    viewModel.processRegisterUser(email)
                 }),
             shape = CircleShape,
             isDarkTheme = true,
@@ -260,7 +260,7 @@ fun LoginFormFields(
                 .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
                     viewModel.processUserLogin(
-                        userName,
+                        email,
                         password,
                         userState = appState.currentUserState
                     )
@@ -314,8 +314,8 @@ fun LoginFormFields(
     }
 
     Text(
-        modifier = Modifier.clickable {
-            viewModel.processForgetPassword()
+        modifier = Modifier.clip(CircleShape).clickable {
+            viewModel.processForgetPassword(email)
         },
         text = "Forgot Password?",
         fontFamily = defaultFont,

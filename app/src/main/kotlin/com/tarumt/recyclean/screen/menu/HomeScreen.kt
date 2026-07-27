@@ -24,7 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.creamColor
@@ -54,8 +55,6 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
-import com.tarumt.recyclean.navigation.LoginPageDestination
-import com.tarumt.recyclean.navigation.navReveal
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.convertToPart
 import com.tarumt.recyclean.util.DrawResultBox
@@ -68,7 +67,7 @@ import kotlin.random.Random
 
 @Composable
 @Preview
-fun HomeScreen() {
+fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     val scrollableState = rememberScrollState()
     var drawPopup by remember { mutableStateOf(false) }
     var currentProductSelected by remember { mutableStateOf<ProductsCategory?>(null) }
@@ -94,9 +93,11 @@ fun HomeScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    modifier = Modifier.navReveal(appState.navigator, LoginPageDestination),
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Home"
+                    modifier = Modifier.clickable(
+                        enabled = true,
+                        onClick = { viewModel.processUserLogout() }),
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = "Logout"
                 )
                 Box(
                     modifier = Modifier
@@ -312,9 +313,14 @@ fun HomeScreen() {
                                     .offset(x = 60.dp), thickness = 1.dp, color = Color.Gray
                             )
                             Text(
-                                modifier = Modifier.offset(x = 60.dp).clickable(true, onClick = {
-                                    NotificationManager.addToast("WALAO EH JOIS", isSuccess = Random.nextBoolean())
-                                }),
+                                modifier = Modifier
+                                    .offset(x = 60.dp)
+                                    .clickable(true, onClick = {
+                                        NotificationManager.addToast(
+                                            "WALAO EH JOIS",
+                                            isSuccess = Random.nextBoolean()
+                                        )
+                                    }),
                                 text = "Redeem",
                                 fontFamily = defaultFont,
                                 fontSize = 16.sp,
@@ -377,7 +383,9 @@ fun HomeScreen() {
                             .padding(16.dp)
                             .background(color = Color.White, shape = RoundedCornerShape(16.dp))
                             .border(
-                                color = Color.Black, width = 0.5.dp, shape = RoundedCornerShape(16.dp)
+                                color = Color.Black,
+                                width = 0.5.dp,
+                                shape = RoundedCornerShape(16.dp)
                             )
                     ) {
                         Row(
@@ -385,26 +393,48 @@ fun HomeScreen() {
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Column(
-                                modifier = Modifier.width(180.dp).padding(8.dp),
+                                modifier = Modifier
+                                    .width(180.dp)
+                                    .padding(8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(
                                     8.dp, Alignment.Top
                                 )
                             ) {
                                 Text("Address: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
-                                Text(currentSeller.address, fontSize = defaultFontSize, fontFamily = defaultFont)
+                                Text(
+                                    currentSeller.address,
+                                    fontSize = defaultFontSize,
+                                    fontFamily = defaultFont
+                                )
 
                                 Text("Phone: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
-                                Text(currentSeller.phoneNumber, fontSize = defaultFontSize, fontFamily = defaultFont)
+                                Text(
+                                    currentSeller.phoneNumber,
+                                    fontSize = defaultFontSize,
+                                    fontFamily = defaultFont
+                                )
 
-                                Text("Operation Time: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
-                                Text(currentSeller.operationTime, fontSize = defaultFontSize, fontFamily = defaultFont)
+                                Text(
+                                    "Operation Time: ",
+                                    fontSize = 16.sp,
+                                    fontFamily = defaultBoldFont
+                                )
+                                Text(
+                                    currentSeller.operationTime,
+                                    fontSize = defaultFontSize,
+                                    fontFamily = defaultFont
+                                )
                             }
                             Image(
                                 modifier = Modifier
                                     .width(160.dp)
-                                    .height(160.dp).padding(4.dp),
-                                painter = painterResource(currentSeller.sellerLogo), contentDescription = null, contentScale = ContentScale.Fit)
+                                    .height(160.dp)
+                                    .padding(4.dp),
+                                painter = painterResource(currentSeller.sellerLogo),
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit
+                            )
                         }
                     }
                 }
