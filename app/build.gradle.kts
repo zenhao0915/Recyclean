@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
     implementation(libs.generativeai)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)

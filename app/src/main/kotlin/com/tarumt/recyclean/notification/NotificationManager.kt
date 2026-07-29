@@ -31,45 +31,74 @@ import androidx.compose.ui.unit.dp
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.PriorityQueue
 import kotlin.time.Duration.Companion.milliseconds
 
 object NotificationManager {
-    class Notification(val message: String, val isSuccess: Boolean, val priorityLevel: Int)
+    data class Notification(
+        val message: String,
+        val isSuccess: Boolean,
+        val priorityLevel: Int,
+        val timestamp: Long = System.currentTimeMillis()
+    )
 
-    private val notificationQueue = PriorityQueue<Notification>(compareBy { it.priorityLevel })
+    private val notificationQueue = PriorityQueue<Notification>(
+        compareByDescending<Notification> { it.priorityLevel }.thenBy { it.timestamp }
+    )
+
     var currentNotification by mutableStateOf<Notification?>(null)
         private set
     var lastNotification by mutableStateOf<Notification?>(null)
         private set
-    private var hasInit by mutableStateOf(false)
+
+    private var displayJob: Job? = null
 
     fun addToast(message: String, isSuccess: Boolean = true, isPriority: Boolean = false) {
-        notificationQueue.add(
-            Notification(
-                message,
-                isSuccess,
-                if (isPriority) Int.MAX_VALUE else 0
-            )
-        )
+        val priority = if (isPriority) Int.MAX_VALUE else 0
+        val newNotification = Notification(message, isSuccess, priority)
+
+        synchronized(notificationQueue) {
+            notificationQueue.add(newNotification)
+        }
+
+        if (isPriority) {
+            val curr = currentNotification
+            if (curr != null && curr.priorityLevel < Int.MAX_VALUE) {
+                displayJob?.cancel() // 强制中断 2500ms 的 delay
+            }
+        }
     }
 
     @Composable
     fun UpdateNotification() {
         LaunchedEffect(Unit) {
-            if (hasInit) return@LaunchedEffect
-            hasInit = true
             while (true) {
                 val nextNotification = synchronized(notificationQueue) {
                     notificationQueue.poll()
                 }
+
                 if (nextNotification != null) {
                     Log.d("Notification", nextNotification.message)
                     currentNotification = nextNotification
-                    delay(2500.milliseconds)
-                    lastNotification = currentNotification
-                    currentNotification = null
+
+                    val job = launch {
+                        delay(2500.milliseconds)
+                    }
+                    displayJob = job
+
+                    try {
+                        job.join()
+                    } catch (_: CancellationException) {
+                        Log.d("Notification", "Interrupted by higher priority toast!")
+                    } finally {
+                        lastNotification = currentNotification
+                        currentNotification = null
+                        displayJob = null
+                    }
                 }
                 delay(250.milliseconds)
             }

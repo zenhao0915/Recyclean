@@ -17,6 +17,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Recyclean">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDtq4aLhA85J9IB4JVHSMvSIr29Zu9coiU" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

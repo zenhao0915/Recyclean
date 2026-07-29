@@ -25,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -63,6 +64,7 @@ import com.tarumt.recyclean.util.data.Grade
 import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.UserState
+import com.tarumt.recyclean.util.openGoogleMap
 import kotlin.random.Random
 
 @Composable
@@ -369,6 +371,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                     }
             )
             currentSellersSelected?.let { currentSeller ->
+                val context = androidx.compose.ui.platform.LocalContext.current
                 Popup(
                     offset = IntOffset(
                         appState.lastTouchOffset.x.toInt() - 60,
@@ -388,57 +391,101 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
                                 shape = RoundedCornerShape(16.dp)
                             )
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .width(180.dp)
-                                    .padding(8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(
-                                    8.dp, Alignment.Top
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
                             ) {
-                                Text("Address: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
-                                Text(
-                                    currentSeller.address,
-                                    fontSize = defaultFontSize,
-                                    fontFamily = defaultFont
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .width(180.dp)
+                                        .padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(
+                                        8.dp, Alignment.Top
+                                    )
+                                ) {
+                                    Text(
+                                        "Address: ",
+                                        fontSize = 16.sp,
+                                        fontFamily = defaultBoldFont
+                                    )
+                                    Text(
+                                        currentSeller.address,
+                                        fontSize = defaultFontSize,
+                                        fontFamily = defaultFont
+                                    )
 
-                                Text("Phone: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
-                                Text(
-                                    currentSeller.phoneNumber,
-                                    fontSize = defaultFontSize,
-                                    fontFamily = defaultFont
-                                )
+                                    Text("Phone: ", fontSize = 16.sp, fontFamily = defaultBoldFont)
+                                    Text(
+                                        currentSeller.phoneNumber,
+                                        fontSize = defaultFontSize,
+                                        fontFamily = defaultFont
+                                    )
 
-                                Text(
-                                    "Operation Time: ",
-                                    fontSize = 16.sp,
-                                    fontFamily = defaultBoldFont
-                                )
-                                Text(
-                                    currentSeller.operationTime,
-                                    fontSize = defaultFontSize,
-                                    fontFamily = defaultFont
+                                    Text(
+                                        "Operation Time: ",
+                                        fontSize = 16.sp,
+                                        fontFamily = defaultBoldFont
+                                    )
+                                    Text(
+                                        currentSeller.operationTime,
+                                        fontSize = defaultFontSize,
+                                        fontFamily = defaultFont
+                                    )
+                                }
+                                Image(
+                                    modifier = Modifier
+                                        .width(160.dp)
+                                        .height(160.dp)
+                                        .padding(4.dp),
+                                    painter = painterResource(currentSeller.sellerLogo),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Fit
                                 )
                             }
-                            Image(
+                            Spacer(Modifier.height(4.dp))
+                            Box(
                                 modifier = Modifier
-                                    .width(160.dp)
-                                    .height(160.dp)
-                                    .padding(4.dp),
-                                painter = painterResource(currentSeller.sellerLogo),
-                                contentDescription = null,
-                                contentScale = ContentScale.Fit
-                            )
+                                    .height(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF4285F4), shape = CircleShape)
+                                    .clickable {
+                                        openGoogleMap(
+                                            context = context,
+                                            address = currentSeller.address,
+                                            latitude = currentSeller.latitude,
+                                            longitude = currentSeller.longitude
+                                        )
+                                        drawPopup = false
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = "Map Pin",
+                                        tint = Color.White
+                                    )
+                                    Text(
+                                        text = "Open in Google Maps",
+                                        color = Color.White,
+                                        fontSize = defaultFontSize,
+                                        fontFamily = defaultBoldFont
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
                         }
                     }
                 }
-
             } ?: run {
                 currentProductSelected?.let {
                     Popup(
