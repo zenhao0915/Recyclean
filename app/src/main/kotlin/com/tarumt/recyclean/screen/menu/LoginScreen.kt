@@ -235,7 +235,7 @@ fun LoginFormFields(
                 .background(color = greenCyanColor, shape = CircleShape)
                 .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
-                    viewModel.processRegisterUser(email)
+                    viewModel.processRegisterUser(email, password, appState.currentUserState)
                 }),
             shape = CircleShape,
             isDarkTheme = true,

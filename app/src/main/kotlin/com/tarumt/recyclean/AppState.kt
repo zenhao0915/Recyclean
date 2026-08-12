@@ -6,14 +6,16 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.tarumt.recyclean.navigation.NavigatorState
 import com.tarumt.recyclean.screen.addsell.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserState
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.realtime.Realtime
 import kotlinx.coroutines.CoroutineScope
 
 class AppState {
@@ -23,8 +25,14 @@ class AppState {
 
     var currentUser by mutableStateOf<User?>(null)
     var currentUserState by mutableStateOf(UserState.Normal)
-    val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
-    val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+    val supabase = createSupabaseClient(
+        supabaseUrl = "https://cokpusdkqdwnltggirpd.supabase.co",
+        supabaseKey = "sb_publishable_iPpoy81AmIAedZSDon_Sfg_8kIZq60e"
+    ) {
+        install(Auth)
+        install(Postgrest)
+        install(Realtime)
+    }
 
     val navigator = NavigatorState()
     var lastTouchOffset by mutableStateOf(Offset.Zero)
