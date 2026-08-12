@@ -12,8 +12,8 @@ import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserState
-import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import kotlinx.coroutines.CoroutineScope

@@ -114,9 +114,9 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                         LoginFormFields(
                             viewModel,
                             email = email.value,
-                            onEmailChange = { email.value = it },
+                            onEmailChange = { email.value = it.replace("\\", "") },
                             password = password.value,
-                            onPasswordChange = { password.value = it })
+                            onPasswordChange = { password.value = it.replace("\\", "") })
                     }
                 }
             } else {
@@ -139,9 +139,9 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                         LoginFormFields(
                             viewModel,
                             email = email.value,
-                            onEmailChange = { email.value = it },
+                            onEmailChange = { email.value = it.replace("\\", "") },
                             password = password.value,
-                            onPasswordChange = { password.value = it })
+                            onPasswordChange = { password.value = it.replace("\\", "") })
                     }
                 }
             }

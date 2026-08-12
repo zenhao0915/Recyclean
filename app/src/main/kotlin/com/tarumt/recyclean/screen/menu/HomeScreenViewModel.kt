@@ -2,15 +2,18 @@ package com.tarumt.recyclean.screen.menu
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.data.UserState
+import io.github.jan.supabase.gotrue.auth
+import kotlinx.coroutines.launch
 
 class HomeScreenViewModel: ViewModel() {
     fun processUserLogout() = runCatching {
         if (!appState.isDebuggerMode) {
-            appState.auth.signOut()
+            viewModelScope.launch { appState.supabase.auth.signOut() }
         }
 
         appState.currentUser = null

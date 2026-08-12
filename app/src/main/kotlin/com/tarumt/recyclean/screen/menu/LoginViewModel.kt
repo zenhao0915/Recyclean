@@ -10,8 +10,8 @@ import com.tarumt.recyclean.navigation.HomePageDestination
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserState
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -25,6 +25,58 @@ data class UserProfileDto(
 class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
+
+    init {
+        checkAutoLogin {
+
+        }
+    }
+
+    fun checkAutoLogin(onComplete: () -> Unit) {
+        appState.apply {
+            if (isDebuggerMode) {
+                onComplete()
+                return
+            }
+            scope.launch {
+                try {
+                    supabase.auth.awaitInitialization()
+                    // Check Local Session
+                    val currentSession = supabase.auth.currentSessionOrNull()
+                    val currentSupabaseUser = supabase.auth.currentUserOrNull()
+
+                    if (currentSession != null && currentSupabaseUser != null) {
+                        val uid = currentSupabaseUser.id
+                        val email = currentSupabaseUser.email ?: ""
+
+                        val profile = supabase.from("users")
+                            .select {
+                                filter { eq("id", uid) }
+                            }.decodeSingle<UserProfileDto>()
+
+                        val mappedState = when (profile.role?.lowercase()) {
+                            "admin" -> UserState.Admin
+                            "thirdparty", "recycler" -> UserState.ThirdParty
+                            else -> UserState.Normal
+                        }
+
+                        currentUserState = mappedState
+                        currentUser = User(
+                            userName = email,
+                            password = 0,
+                            currentUserState = mappedState
+                        )
+
+                        navigator.navigateTo(HomePageDestination, lastTouchOffset)
+                    }
+                } catch (_: Exception) {
+                    currentUser = null
+                } finally {
+                    onComplete()
+                }
+            }
+        }
+    }
 
     fun processUserLogin(userName: String, password: String, userState: UserState) {
         if (appState.isDebuggerMode) {
@@ -124,7 +176,11 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun processRegisterUser(userName: String, password: String, userState: UserState = appState.currentUserState) {
+    fun processRegisterUser(
+        userName: String,
+        password: String,
+        userState: UserState = appState.currentUserState
+    ) {
         val trimmedEmail = userName.trim()
         val trimmedPassword = password.trim()
 
@@ -173,11 +229,18 @@ class LoginViewModel : ViewModel() {
                     }
 
                     isLoading = false
-                    NotificationManager.addToast("Registration successful! You can now log in.", isSuccess = true)
+                    NotificationManager.addToast(
+                        "Registration successful! You can now log in.",
+                        isSuccess = true
+                    )
                 } else {
                     isLoading = false
-                    NotificationManager.addToast("Registration submitted. Please check email for confirmation.", isSuccess = true)
+                    NotificationManager.addToast(
+                        "Registration submitted. Please check email for confirmation.",
+                        isSuccess = true
+                    )
                 }
+                appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
             } catch (e: Exception) {
                 isLoading = false
                 NotificationManager.addToast(

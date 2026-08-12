@@ -24,7 +24,7 @@ class AddSellViewModel : ViewModel() {
     var errorMessage by mutableStateOf("")
         private set
 
-    private val geminiModel = GenerativeModel(modelName = "gemini-3.5-flash-lite", apiKey = api_key)
+    private val geminiModel by lazy { GenerativeModel(modelName = "gemini-3.5-flash-lite", apiKey = api_key) }
 
     private val baseAiPrompt = """
         You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
