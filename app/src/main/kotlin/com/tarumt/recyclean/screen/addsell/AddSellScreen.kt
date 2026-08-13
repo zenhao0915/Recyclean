@@ -356,9 +356,12 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                         val selectedParts = appState.cachedPartList.filter { it.isSelected }
 
                         if (selectedParts.isNotEmpty()) {
+                            val currentEmail = appState.currentUser?.userNameWithEmail?.trim()
+                            val activeUserName = if (!currentEmail.isNullOrBlank()) currentEmail else "DebugUser"
+
                             val newAppointment = Appointment(
                                 appointmentId = "APT-${System.currentTimeMillis().toString().takeLast(4)}",
-                                userName = "Current User",
+                                userName = activeUserName,
                                 deviceName = appState.detectedDeviceName,
                                 scheduledDate = "Pending Date",
                                 estimatedValue = totalPrice,
@@ -366,16 +369,16 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                                 selectedParts = selectedParts,
                                 targetSeller = appState.selectedSeller.sellerName
                             )
-                            appState.scope.launch {
-                                try {
-                                    if (!appState.isDebuggerMode) {
+                            if (!appState.isDebuggerMode) {
+                                appState.scope.launch {
+                                    try {
                                         appState.supabase.from("appointments").insert(newAppointment.toDto())
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
                                     }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
                                 }
                             }
-                            appState.pendingAppointments.add(newAppointment)
+                            appState.pendingAppointments.add(0, newAppointment)
                             appState.navigator.navigateTo(MeetingPageDestination, appState.lastTouchOffset)
 
                             appState.cachedBitmap = null
