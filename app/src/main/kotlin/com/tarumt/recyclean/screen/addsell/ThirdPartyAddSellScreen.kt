@@ -6,5 +6,5 @@ import com.tarumt.recyclean.util.DrawTemplate
 
 @Composable
 fun ThirdPartyAddSellScreen() = DrawTemplate {
-    Text(text = "Test AdminAddSell")
+    Text(text = "Spinning Cat Ready..")
 }

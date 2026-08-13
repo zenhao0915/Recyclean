@@ -5,39 +5,98 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.VerificationPageDestination
+import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.data.Appointment
+import com.tarumt.recyclean.util.data.AppointmentDto
+import com.tarumt.recyclean.util.data.toAppointment
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.decodeRecord
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class ThirdPartyMeetingViewModel : ViewModel() {
 
-    // State to hold the specific appointment when the pop-up is open
     var selectedAppointment by mutableStateOf<Appointment?>(null)
         private set
 
-    // Opens the pop-up by finding the appointment ID in the global state
+    init {
+        fetchInitialAppointments()
+        listenToRealtimeAppointments()
+    }
+
+    private fun fetchInitialAppointments() {
+        if (appState.isDebuggerMode) return
+
+        viewModelScope.launch {
+            try {
+                val dtos = appState.supabase.from("appointments")
+                    .select()
+                    .decodeList<AppointmentDto>()
+
+                appState.pendingAppointments.clear()
+                appState.pendingAppointments.addAll(dtos.map { it.toAppointment() }.reversed())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun listenToRealtimeAppointments() {
+        if (appState.isDebuggerMode) return
+
+        viewModelScope.launch {
+            try {
+                val channel = appState.supabase.channel("merchant-appointments-live")
+
+                val changeFlow = channel.postgresChangeFlow<PostgresAction.Insert>(schema = "public") {
+                    table = "appointments"
+                }
+
+                channel.subscribe()
+
+                changeFlow.onEach { change ->
+                    val newDto = change.decodeRecord<AppointmentDto>()
+                    val newAppointment = newDto.toAppointment()
+
+                    if (appState.pendingAppointments.none { it.appointmentId == newAppointment.appointmentId }) {
+                        appState.pendingAppointments.add(0, newAppointment)
+
+                        NotificationManager.addToast(
+                            "New Order！Device: ${newAppointment.deviceName} (RM ${newAppointment.estimatedValue})",
+                            isSuccess = true,
+                            isPriority = true
+                        )
+                    }
+                }.launchIn(viewModelScope)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun openApprovalDialog(appointmentId: String) {
         selectedAppointment = appState.pendingAppointments.find { it.appointmentId == appointmentId }
     }
 
-    // Closes the pop-up
     fun closeApprovalDialog() {
         selectedAppointment = null
     }
 
-    // Update this function in ThirdPartyMeetingViewModel.kt
     fun approveAppointment(appointment: Appointment) {
-        // Temporarily store the appointment we want to verify in AppState so the next screen can read it
         appState.currentVerificationAppointment = appointment
         closeApprovalDialog()
-
-        // Navigate to the new Verification Screen (You'll need to define this destination object in your navigation framework)
         appState.navigator.navigateTo(VerificationPageDestination, Offset.Zero)
     }
 
-    // Backend logic when third party rejects
     fun rejectAppointment(appointment: Appointment) {
-        // Removes the appointment from the list and closes the pop-up
         appState.pendingAppointments.remove(appointment)
         closeApprovalDialog()
     }

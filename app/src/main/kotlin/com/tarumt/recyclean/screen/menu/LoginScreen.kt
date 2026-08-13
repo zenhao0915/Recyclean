@@ -56,6 +56,7 @@ import com.tarumt.recyclean.util.data.UserState
 @Preview
 fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
     Box(contentAlignment = Alignment.Center) {
+        viewModel.checkAutoLogin()
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp
 
@@ -314,9 +315,11 @@ fun LoginFormFields(
     }
 
     Text(
-        modifier = Modifier.clip(CircleShape).clickable {
-            viewModel.processForgetPassword(email)
-        },
+        modifier = Modifier
+            .clip(CircleShape)
+            .clickable {
+                viewModel.processForgetPassword(email)
+            },
         text = "Forgot Password?",
         fontFamily = defaultFont,
         fontSize = 12.sp,

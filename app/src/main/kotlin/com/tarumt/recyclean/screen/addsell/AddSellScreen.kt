@@ -69,6 +69,9 @@ import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.AppointmentStatus
 import com.tarumt.recyclean.util.data.Sellers
+import com.tarumt.recyclean.util.data.toDto
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.launch
 
 data class SalvageablePart(
     val name: String, val estimatedPrice: Double, var isSelected: Boolean = false
@@ -363,7 +366,15 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                                 selectedParts = selectedParts,
                                 targetSeller = appState.selectedSeller.sellerName
                             )
-
+                            appState.scope.launch {
+                                try {
+                                    if (!appState.isDebuggerMode) {
+                                        appState.supabase.from("appointments").insert(newAppointment.toDto())
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
                             appState.pendingAppointments.add(newAppointment)
                             appState.navigator.navigateTo(MeetingPageDestination, appState.lastTouchOffset)
 

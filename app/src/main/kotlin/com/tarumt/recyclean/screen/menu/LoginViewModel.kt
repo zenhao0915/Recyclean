@@ -26,13 +26,7 @@ class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    init {
-        checkAutoLogin {
-
-        }
-    }
-
-    fun checkAutoLogin(onComplete: () -> Unit) {
+    fun checkAutoLogin(onComplete: () -> Unit = {}) {
         appState.apply {
             if (isDebuggerMode) {
                 onComplete()
