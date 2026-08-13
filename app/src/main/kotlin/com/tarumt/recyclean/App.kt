@@ -1,29 +1,44 @@
 package com.tarumt.recyclean
 
 import android.annotation.SuppressLint
-import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.common.appState
-import com.tarumt.recyclean.navigation.VerificationPageDestination
+import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.AppNavigator
 import com.tarumt.recyclean.navigation.DataPageDestination
 import com.tarumt.recyclean.navigation.LoginPageDestination
 import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.navigation.ProfilePageDestination
+import com.tarumt.recyclean.navigation.VerificationPageDestination
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.AddSellScreen
 import com.tarumt.recyclean.screen.addsell.ThirdPartyAddSellScreen
@@ -34,6 +49,7 @@ import com.tarumt.recyclean.screen.meeting.ThirdPartyMeetingScreen
 import com.tarumt.recyclean.screen.meeting.ThirdPartyVerificationScreen
 import com.tarumt.recyclean.screen.menu.HomeScreen
 import com.tarumt.recyclean.screen.menu.LoginScreen
+import com.tarumt.recyclean.screen.menu.LoginViewModel
 import com.tarumt.recyclean.screen.menu.ProfileScreen
 import com.tarumt.recyclean.util.DrawNavigator
 import com.tarumt.recyclean.util.data.UserState
@@ -43,76 +59,120 @@ import com.tarumt.recyclean.util.data.UserState
 fun App() {
     appState.scope = rememberCoroutineScope()
     NotificationManager.UpdateNotification()
+
+    val loginViewModel: LoginViewModel = viewModel()
+    var isCheckingAutoLogin by rememberSaveable { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        loginViewModel.checkAutoLogin {
+            isCheckingAutoLogin = false
+        }
+    }
+
     MaterialTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            val change = event.changes.firstOrNull()
-                            if (change != null && change.pressed && !change.previousPressed) {
-                                appState.lastTouchOffset = change.position
+        if (isCheckingAutoLogin) {
+            SplashScreen()
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull()
+                                if (change != null && change.pressed && !change.previousPressed) {
+                                    appState.lastTouchOffset = change.position
+                                }
                             }
                         }
                     }
-                }
-        ) {
-            Scaffold(containerColor = Color.White, bottomBar = {
-                // Navigator
-                if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
-            }, floatingActionButton = {}) { innerPadding ->
-                Box(
-                    modifier = Modifier.padding(
-                        if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(
-                            0.dp
+            ) {
+                Scaffold(
+                    containerColor = Color.White,
+                    bottomBar = {
+                        // Navigator
+                        if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
+                    },
+                    floatingActionButton = {}
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier.padding(
+                            if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(
+                                0.dp
+                            )
                         )
-                    )
-                ) {
-                    AppNavigator(appState.navigator, homeContent = {
-                        LoginScreen()
-                    }, destinationContent = { destination ->
-                        val currentUserState = appState.currentUserState
+                    ) {
+                        AppNavigator(appState.navigator, homeContent = {
+                            LoginScreen()
+                        }, destinationContent = { destination ->
+                            val currentUserState = appState.currentUserState
 
-                        when (destination) {
-                            is LoginPageDestination -> LoginScreen()
-                            is ProfilePageDestination -> ProfileScreen()
+                            when (destination) {
+                                is LoginPageDestination -> LoginScreen()
+                                is ProfilePageDestination -> ProfileScreen()
 
-                            is VerificationPageDestination -> {
-                                // Uses the temporary holding variable you created to pass data to the screen
-                                appState.currentVerificationAppointment?.let { appt ->
-                                    ThirdPartyVerificationScreen(appointment = appt)
+                                is VerificationPageDestination -> {
+                                    appState.currentVerificationAppointment?.let { appt ->
+                                        ThirdPartyVerificationScreen(appointment = appt)
+                                    }
                                 }
-                            }
 
-                            is MeetingPageDestination -> {
-                                when (currentUserState) {
-                                    UserState.ThirdParty -> ThirdPartyMeetingScreen()
-                                    else -> DefaultMeetingScreen()
+                                is MeetingPageDestination -> {
+                                    when (currentUserState) {
+                                        UserState.ThirdParty -> ThirdPartyMeetingScreen()
+                                        else -> DefaultMeetingScreen()
+                                    }
                                 }
-                            }
 
-                            is AddSellPageDestination -> {
-                                when (currentUserState) {
-                                    UserState.ThirdParty -> ThirdPartyAddSellScreen()
-                                    else -> AddSellScreen()
+                                is AddSellPageDestination -> {
+                                    when (currentUserState) {
+                                        UserState.ThirdParty -> ThirdPartyAddSellScreen()
+                                        else -> AddSellScreen()
+                                    }
                                 }
-                            }
 
-                            is DataPageDestination -> {
-                                when (currentUserState) {
-                                    UserState.Admin -> AdminDataScreen()
-                                    else -> DefaultDataScreen()
+                                is DataPageDestination -> {
+                                    when (currentUserState) {
+                                        UserState.Admin -> AdminDataScreen()
+                                        else -> DefaultDataScreen()
+                                    }
                                 }
-                            }
 
-                            else -> HomeScreen()
-                        }
-                    })
-                    NotificationManager.CallToast()
+                                else -> HomeScreen()
+                            }
+                        })
+                        NotificationManager.CallToast()
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SplashScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize().background(color = Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo),
+                contentDescription = "Logo",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(180.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CircularProgressIndicator(
+                color = vanillaColor,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(36.dp)
+            )
         }
     }
 }

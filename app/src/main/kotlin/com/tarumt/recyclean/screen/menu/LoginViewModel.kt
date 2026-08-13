@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen.menu
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,73 +10,89 @@ import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.HomePageDestination
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.data.User
+import com.tarumt.recyclean.util.data.UserProfileDto
 import com.tarumt.recyclean.util.data.UserState
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class UserProfileDto(
-    val id: String,
-    val role: String? = "Normal"
-)
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    fun checkAutoLogin(onComplete: () -> Unit = {}) {
-        appState.apply {
-            if (isDebuggerMode) {
-                onComplete()
-                return
-            }
-            scope.launch {
-                try {
-                    supabase.auth.awaitInitialization()
-                    // Check Local Session
-                    val currentSession = supabase.auth.currentSessionOrNull()
-                    val currentSupabaseUser = supabase.auth.currentUserOrNull()
+    suspend fun checkAutoLogin(onComplete: () -> Unit = {}): Boolean {
+        if (appState.isDebuggerMode) {
+            onComplete()
+            return false
+        }
 
-                    if (currentSession != null && currentSupabaseUser != null) {
-                        val uid = currentSupabaseUser.id
-                        val email = currentSupabaseUser.email ?: ""
+        return try {
+            val isSuccess = withTimeoutOrNull(3000L.milliseconds) {
+                appState.supabase.auth.awaitInitialization()
 
-                        val profile = supabase.from("users")
-                            .select {
-                                filter { eq("id", uid) }
-                            }.decodeSingle<UserProfileDto>()
+                val currentSession = appState.supabase.auth.currentSessionOrNull()
+                val currentSupabaseUser = appState.supabase.auth.currentUserOrNull()
 
-                        val mappedState = when (profile.role?.lowercase()) {
-                            "admin" -> UserState.Admin
-                            "thirdparty", "recycler" -> UserState.ThirdParty
-                            else -> UserState.Normal
-                        }
+                if (currentSession != null && currentSupabaseUser != null) {
+                    val uid = currentSupabaseUser.id
+                    val email = currentSupabaseUser.email ?: ""
 
-                        currentUserState = mappedState
-                        currentUser = User(
-                            userName = email,
-                            password = 0,
-                            currentUserState = mappedState
-                        )
+                    val profile = appState.supabase.from("users")
+                        .select {
+                            filter { eq("id", uid) }
+                        }.decodeSingle<UserProfileDto>()
 
-                        navigator.navigateTo(HomePageDestination, lastTouchOffset)
+                    val mappedState = when (profile.role?.lowercase()) {
+                        "admin" -> UserState.Admin
+                        "thirdparty", "recycler" -> UserState.ThirdParty
+                        else -> UserState.Normal
                     }
-                } catch (_: Exception) {
-                    currentUser = null
-                } finally {
-                    onComplete()
+
+                    appState.currentUserState = mappedState
+
+                    appState.currentUser = User(
+                        userNameWithEmail = profile.username ?: email.substringBefore("@"),
+                        password = 0,
+                        currentUserState = mappedState
+                    )
+
+                    NotificationManager.addToast("Session Restored!", isSuccess = true)
+
+                    appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
+                    true
+                } else {
+                    appState.currentUser = null
+                    false
                 }
             }
+            if (isSuccess == null) {
+                Log.w(
+                    "AutoLogin",
+                    "Auto login check timed out after 3 seconds. Falling back to LoginScreen."
+                )
+                appState.currentUser = null
+                false
+            } else {
+                isSuccess
+            }
+        } catch (e: Exception) {
+            Log.e("AutoLogin", "Error during auto login check", e)
+            appState.currentUser = null
+            false
+        } finally {
+            onComplete()
         }
     }
 
     fun processUserLogin(userName: String, password: String, userState: UserState) {
         if (appState.isDebuggerMode) {
             val dummyUser = User(
-                userName = userName.ifBlank { "DebugUser" },
+                userNameWithEmail = userName.ifBlank { "DebugUser" },
                 password = password.hashCode(),
                 currentUserState = userState
             )
@@ -90,7 +107,7 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        val trimmedEmail = userName.trim()
+        val trimmedEmail = "${userName.trim()}@recyclean.app"
         val trimmedPassword = password.trim()
 
         if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
@@ -153,7 +170,7 @@ class LoginViewModel : ViewModel() {
 
                 appState.currentUserState = mappedState
                 appState.currentUser = User(
-                    userName = email,
+                    userNameWithEmail = email,
                     password = 0,
                     currentUserState = mappedState
                 )
@@ -171,14 +188,16 @@ class LoginViewModel : ViewModel() {
     }
 
     fun processRegisterUser(
-        userName: String,
-        password: String,
+        userNameInput: String,
+        passwordInput: String,
+        securityPinInput: String,
         userState: UserState = appState.currentUserState
     ) {
-        val trimmedEmail = userName.trim()
-        val trimmedPassword = password.trim()
+        val trimmedUsername = userNameInput.trim()
+        val trimmedPassword = passwordInput.trim()
+        val trimmedPin = securityPinInput.trim()
 
-        if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
+        if (trimmedUsername.isBlank() || trimmedPassword.isBlank() || trimmedPin.isBlank()) {
             NotificationManager.addToast(
                 "Please enter both email and password to register.",
                 isSuccess = false
@@ -196,45 +215,52 @@ class LoginViewModel : ViewModel() {
 
         if (appState.isDebuggerMode) {
             NotificationManager.addToast(
-                "[Debug] User $trimmedEmail registered successfully!",
+                "[Debug] User $userNameInput registered successfully!",
                 isSuccess = true
             )
+            processUserLogin(trimmedUsername, trimmedPassword, userState)
             return
         }
 
         isLoading = true
         viewModelScope.launch {
             try {
+                val existingUsers = appState.supabase.from("users")
+                    .select {
+                        filter { eq("username", trimmedUsername) }
+                    }.decodeList<UserProfileDto>()
+
+                if (existingUsers.isNotEmpty()) {
+                    isLoading = false
+                    NotificationManager.addToast(
+                        "Username '$trimmedUsername' is already taken!",
+                        isSuccess = false
+                    )
+                    return@launch
+                }
+
+                val virtualEmail = "$trimmedUsername@recyclean.app".lowercase()
                 appState.supabase.auth.signUpWith(Email) {
-                    email = trimmedEmail
-                    this.password = trimmedPassword
+                    email = virtualEmail
+                    password = trimmedPassword
                 }
 
                 val newUser = appState.supabase.auth.currentUserOrNull()
 
                 if (newUser != null) {
-                    runCatching {
-                        appState.supabase.from("users").insert(
-                            UserProfileDto(
-                                id = newUser.id,
-                                role = userState.name
-                            )
+                    appState.supabase.from("users").upsert(
+                        UserProfileDto(
+                            id = newUser.id,
+                            username = trimmedUsername,
+                            security_pin = trimmedPin, // 保存安全码
+                            role = userState.name
                         )
-                    }
+                    )
 
                     isLoading = false
-                    NotificationManager.addToast(
-                        "Registration successful! You can now log in.",
-                        isSuccess = true
-                    )
-                } else {
-                    isLoading = false
-                    NotificationManager.addToast(
-                        "Registration submitted. Please check email for confirmation.",
-                        isSuccess = true
-                    )
+                    NotificationManager.addToast("Registered successfully!", isSuccess = true)
+                    processUserLogin(trimmedUsername, trimmedPassword, userState)
                 }
-                appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
             } catch (e: Exception) {
                 isLoading = false
                 NotificationManager.addToast(
@@ -245,11 +271,18 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun processForgetPassword(email: String) {
-        val trimmedEmail = email.trim()
-        if (trimmedEmail.isBlank()) {
+    fun processForgetPassword(
+        usernameInput: String,
+        securityPinInput: String,
+        newPasswordInput: String
+    ) {
+        val trimmedUsername = usernameInput.trim()
+        val trimmedPin = securityPinInput.trim()
+        val trimmedNewPassword = newPasswordInput.trim()
+
+        if (trimmedUsername.isBlank() || trimmedPin.isBlank() || trimmedNewPassword.isBlank()) {
             NotificationManager.addToast(
-                "Please enter your email address in the field above.",
+                "Please enter Username, Security PIN, and New Password.",
                 isSuccess = false
             )
             return
@@ -257,25 +290,42 @@ class LoginViewModel : ViewModel() {
 
         if (appState.isDebuggerMode) {
             NotificationManager.addToast(
-                "[Debug] Simulated sending password reset email to $trimmedEmail",
+                "[Debug] Simulated sending password using pin",
                 isSuccess = true
             )
             return
         }
 
         isLoading = true
+
         viewModelScope.launch {
             try {
-                appState.supabase.auth.resetPasswordForEmail(trimmedEmail)
+                val isSuccess = appState.supabase.postgrest.rpc(
+                    function = "reset_password_with_pin",
+                    parameters = mapOf(
+                        "target_username" to trimmedUsername,
+                        "input_pin" to trimmedPin,
+                        "new_password" to trimmedNewPassword
+                    )
+                ).decodeAs<Boolean>()
+
                 isLoading = false
-                NotificationManager.addToast(
-                    "Password reset link sent! Please check your email inbox.",
-                    isSuccess = true
-                )
+
+                if (isSuccess) {
+                    NotificationManager.addToast(
+                        "Password reset successfully! You can log in now.",
+                        isSuccess = true
+                    )
+                } else {
+                    NotificationManager.addToast(
+                        "Failed: Invalid Username or Security PIN.",
+                        isSuccess = false
+                    )
+                }
             } catch (e: Exception) {
                 isLoading = false
                 NotificationManager.addToast(
-                    "Failed to send reset link: ${e.localizedMessage}",
+                    "Error resetting password: ${e.localizedMessage}",
                     isSuccess = false
                 )
             }

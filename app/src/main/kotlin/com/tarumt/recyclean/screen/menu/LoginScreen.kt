@@ -17,7 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -47,6 +53,7 @@ import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.greenCyanColor
 import com.tarumt.recyclean.common.skyBlueColor
+import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.WindowWidthSizeClass
 import com.tarumt.recyclean.util.data.UserState
@@ -56,7 +63,6 @@ import com.tarumt.recyclean.util.data.UserState
 @Preview
 fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
     Box(contentAlignment = Alignment.Center) {
-        viewModel.checkAutoLogin()
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp
 
@@ -78,7 +84,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
             modifier = Modifier.fillMaxSize()
         )
 
-        val email = rememberSaveable { mutableStateOf("") }
+        val username = rememberSaveable { mutableStateOf("") }
         val password = rememberSaveable { mutableStateOf("") }
 
         GlassBox(
@@ -114,8 +120,8 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                     ) {
                         LoginFormFields(
                             viewModel,
-                            email = email.value,
-                            onEmailChange = { email.value = it.replace("\\", "") },
+                            username = username.value,
+                            onUsernameChange = { username.value = it.replace("\\", "") },
                             password = password.value,
                             onPasswordChange = { password.value = it.replace("\\", "") })
                     }
@@ -139,8 +145,8 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                     ) {
                         LoginFormFields(
                             viewModel,
-                            email = email.value,
-                            onEmailChange = { email.value = it.replace("\\", "") },
+                            username = username.value,
+                            onUsernameChange = { username.value = it.replace("\\", "") },
                             password = password.value,
                             onPasswordChange = { password.value = it.replace("\\", "") })
                     }
@@ -152,12 +158,21 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
 @Composable
 fun LoginFormFields(
     viewModel: LoginViewModel,
-    email: String,
-    onEmailChange: (String) -> Unit,
+    username: String,
+    onUsernameChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit
 ) {
-    //Email Input
+    val showRegisterPinDialog = rememberSaveable { mutableStateOf(false) }
+    val showForgetPasswordDialog = rememberSaveable { mutableStateOf(false) }
+
+    val registerPin = rememberSaveable { mutableStateOf("") }
+
+    val resetUsername = rememberSaveable { mutableStateOf("") }
+    val resetPin = rememberSaveable { mutableStateOf("") }
+    val resetNewPassword = rememberSaveable { mutableStateOf("") }
+
+    // Username Input
     GlassBox(
         modifier = Modifier
             .width(250.dp)
@@ -167,11 +182,11 @@ fun LoginFormFields(
         contentAlignment = Alignment.CenterStart
     ) {
         TextField(
-            value = email,
-            onValueChange = onEmailChange,
+            value = username,
+            onValueChange = onUsernameChange,
             placeholder = {
                 Text(
-                    text = "Email",
+                    text = "Username",
                     fontFamily = defaultFont,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -186,7 +201,7 @@ fun LoginFormFields(
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent
             ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -229,6 +244,7 @@ fun LoginFormFields(
     Row(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
+        // Register Button
         GlassBox(
             modifier = Modifier
                 .width(120.dp)
@@ -236,7 +252,14 @@ fun LoginFormFields(
                 .background(color = greenCyanColor, shape = CircleShape)
                 .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
-                    viewModel.processRegisterUser(email, password, appState.currentUserState)
+                    if (username.isBlank() || password.isBlank()) {
+                        NotificationManager.addToast(
+                            "Please fill in Username and Password first.",
+                            isSuccess = false
+                        )
+                    } else {
+                        showRegisterPinDialog.value = true
+                    }
                 }),
             shape = CircleShape,
             isDarkTheme = true,
@@ -253,6 +276,7 @@ fun LoginFormFields(
 
         Spacer(Modifier.width(8.dp))
 
+        // Login Button
         GlassBox(
             modifier = Modifier
                 .width(120.dp)
@@ -261,7 +285,7 @@ fun LoginFormFields(
                 .clip(CircleShape)
                 .clickable(enabled = true, onClick = {
                     viewModel.processUserLogin(
-                        email,
+                        username,
                         password,
                         userState = appState.currentUserState
                     )
@@ -280,7 +304,7 @@ fun LoginFormFields(
         }
     }
 
-    // Admin/Role Selection Row
+    // Role Selection Row
     Row(
         modifier = Modifier
             .background(Color.Gray.copy(alpha = 0.35f), CircleShape)
@@ -314,11 +338,13 @@ fun LoginFormFields(
         }
     }
 
+    // Forgot Password Text Button
     Text(
         modifier = Modifier
             .clip(CircleShape)
             .clickable {
-                viewModel.processForgetPassword(email)
+                resetUsername.value = username
+                showForgetPasswordDialog.value = true
             },
         text = "Forgot Password?",
         fontFamily = defaultFont,
@@ -326,4 +352,163 @@ fun LoginFormFields(
         fontWeight = FontWeight.W900,
         textDecoration = TextDecoration.Underline
     )
+
+    // =========================================================================
+    // 🌟 1. 注册设置 Security PIN 弹窗
+    // =========================================================================
+    if (showRegisterPinDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showRegisterPinDialog.value = false },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp),
+            title = {
+                Text(
+                    text = "Set Security PIN",
+                    fontFamily = defaultFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Set a 4-digit Security PIN. You will need this PIN to reset your password if you ever forget it.",
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+
+                    OutlinedTextField(
+                        value = registerPin.value,
+                        onValueChange = { input ->
+                            if (input.length <= 4) {
+                                registerPin.value = input.filter { it.isDigit() }
+                            }
+                        },
+                        label = { Text("4-Digit Security PIN") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (registerPin.value.length == 4) {
+                            viewModel.processRegisterUser(
+                                userNameInput = username,
+                                passwordInput = password,
+                                securityPinInput = registerPin.value,
+                                userState = appState.currentUserState
+                            )
+                            showRegisterPinDialog.value = false
+                            registerPin.value = ""
+                        } else {
+                            NotificationManager.addToast(
+                                "Security PIN must be exactly 4 digits.",
+                                isSuccess = false
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = greenCyanColor),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Register Now", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showRegisterPinDialog.value = false },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    // =========================================================================
+    // 🌟 2. 重置密码 弹窗 (PIN 码认证)
+    // =========================================================================
+    if (showForgetPasswordDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showForgetPasswordDialog.value = false },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp),
+            title = {
+                Text(
+                    text = "Reset Password",
+                    fontFamily = defaultFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = resetUsername.value,
+                        onValueChange = { resetUsername.value = it },
+                        label = { Text("Username") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = resetPin.value,
+                        onValueChange = { input ->
+                            if (input.length <= 4) {
+                                resetPin.value = input.filter { it.isDigit() }
+                            }
+                        },
+                        label = { Text("4-Digit Security PIN") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = resetNewPassword.value,
+                        onValueChange = { resetNewPassword.value = it },
+                        label = { Text("New Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.processForgetPassword(
+                            usernameInput = resetUsername.value,
+                            securityPinInput = resetPin.value,
+                            newPasswordInput = resetNewPassword.value
+                        )
+                        showForgetPasswordDialog.value = false
+                        resetPin.value = ""
+                        resetNewPassword.value = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = skyBlueColor),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Reset Password", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showForgetPasswordDialog.value = false },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            }
+        )
+    }
 }

@@ -65,7 +65,7 @@ fun ProfileScreen() = DrawTemplate {
 
         Text(
             modifier = Modifier.offset(y = 12.dp),
-            text = "Ling Yue",
+            text = appState.currentUser?.userName ?: "NULL",
             fontFamily = defaultBoldFont,
             fontSize = 24.sp
         )
