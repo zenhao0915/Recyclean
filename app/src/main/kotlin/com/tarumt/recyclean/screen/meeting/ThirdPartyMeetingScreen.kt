@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,15 +40,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.util.data.Appointment
 
 @Preview(showBackground = true, name = "Appointment List Preview")
@@ -65,30 +69,68 @@ fun ThirdPartyMeetingScreen(
     appointments: List<Appointment> = appState.pendingAppointments,
     onAppointmentClick: (String) -> Unit = { viewModel.openApprovalDialog(it) }
 ) {
+    // 进入界面时刷新当前商家的订单
+    LaunchedEffect(Unit) {
+        viewModel.fetchInitialAppointments()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Pending Appointments", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "${viewModel.currentMerchantName} Appointments",
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = defaultFont
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF466EF2),
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color(0xFF1A365D),
+                    titleContentColor = Color.White
                 )
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            items(appointments) { appointment ->
-                AppointmentCard(
-                    appointment = appointment,
-                    onClick = { onAppointmentClick(appointment.appointmentId) }
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF2B6CB0)
                 )
+            } else if (appointments.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No pending appointments for ${viewModel.currentMerchantName}.\nNew incoming recycle requests will appear here!",
+                        fontFamily = defaultFont,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center,
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
+                ) {
+                    items(appointments) { appointment ->
+                        AppointmentCard(
+                            appointment = appointment,
+                            onClick = { onAppointmentClick(appointment.appointmentId) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -98,59 +140,84 @@ fun ThirdPartyMeetingScreen(
         AlertDialog(
             onDismissRequest = { viewModel.closeApprovalDialog() },
             containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp),
             title = {
                 Text(
                     text = "Appointment Approval",
+                    fontFamily = defaultFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
             },
             text = {
-                // Added a verticalScroll here in case the AI returns a very long list of parts
                 val scrollState = rememberScrollState()
                 Column(
                     modifier = Modifier.verticalScroll(scrollState),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = "Device: ${appt.deviceName}", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = "Device: ${appt.deviceName}",
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = defaultFont
+                    )
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray.copy(alpha = 0.5f)
+                    )
 
-                    Text(text = "Spare Parts Requested:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        text = "Spare Parts Requested:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        fontFamily = defaultFont
+                    )
 
                     appt.selectedParts.forEach { part ->
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top // Ensures alignment stays at the top if text wraps
+                            verticalAlignment = Alignment.Top
                         ) {
                             Text(
                                 text = "- ${part.name}",
                                 fontSize = 13.sp,
+                                fontFamily = defaultFont,
                                 modifier = Modifier
-                                    .weight(1f) // FIX: This forces the long text to wrap instead of pushing the price off-screen
-                                    .padding(end = 12.dp) // FIX: Adds a small gap between the name and the price
+                                    .weight(1f)
+                                    .padding(end = 12.dp)
                             )
                             Text(
                                 text = String.format("RM %.2f", part.estimatedPrice),
                                 fontSize = 13.sp,
-                                maxLines = 1 // FIX: Forces the price to remain on a single line
+                                fontFamily = defaultFont,
+                                maxLines = 1
                             )
                         }
                     }
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray.copy(alpha = 0.5f)
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Total:", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Estimated Payout:",
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = defaultFont
+                        )
                         Text(
                             text = String.format("RM %.2f", appt.estimatedValue),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 16.sp,
+                            fontFamily = defaultFont,
                             color = Color(0xFF2E7D32)
                         )
                     }
@@ -159,20 +226,25 @@ fun ThirdPartyMeetingScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.approveAppointment(appt) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF466EF2)),
-                    shape = RoundedCornerShape(12.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2B6CB0)),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Approve", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Verify & Accept",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = defaultFont
+                    )
                 }
             },
             dismissButton = {
                 OutlinedButton(
                     onClick = { viewModel.rejectAppointment(appt) },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                    border = BorderStroke(1.dp, Color.Red),
-                    shape = RoundedCornerShape(12.dp)
+                    border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.6f)),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Reject", fontWeight = FontWeight.Bold)
+                    Text("Reject", fontWeight = FontWeight.Bold, fontFamily = defaultFont)
                 }
             }
         )
@@ -186,9 +258,10 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.6f))
     ) {
         Row(
             modifier = Modifier
@@ -201,28 +274,31 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                 Text(
                     text = appointment.deviceName,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontFamily = defaultFont,
+                    fontSize = 17.sp,
+                    color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Seller: ${appointment.userName}",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Seller / Client: ${appointment.userName}",
+                    fontSize = 13.sp,
+                    fontFamily = defaultFont,
+                    color = Color.DarkGray
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = "Date",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF466EF2)
+                        modifier = Modifier.size(15.dp),
+                        tint = Color(0xFF2B6CB0)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = appointment.scheduledDate,
                         fontSize = 12.sp,
-                        color = Color(0xFF466EF2)
+                        fontFamily = defaultFont,
+                        color = Color(0xFF2B6CB0)
                     )
                 }
             }
@@ -234,17 +310,18 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                 Text(
                     text = String.format("RM %.2f", appointment.estimatedValue),
                     fontWeight = FontWeight.ExtraBold,
+                    fontFamily = defaultFont,
                     fontSize = 16.sp,
-                    color = Color(0xFF2E7D32)
+                    color = Color(0xFF1A365D)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Box(
                     modifier = Modifier
                         .background(
                             color = Color(0xFFFFF3E0),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(6.dp)
                         )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = appointment.status.name,
@@ -253,11 +330,11 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "View Details",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.Gray
                 )
             }
         }
