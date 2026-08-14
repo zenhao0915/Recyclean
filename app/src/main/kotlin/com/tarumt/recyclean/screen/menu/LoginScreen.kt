@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -45,6 +46,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
@@ -153,6 +156,50 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                 }
             }
         }
+
+        // 🌟 统一全屏转圈加载遮罩
+        if (viewModel.isLoading) {
+            Dialog(
+                onDismissRequest = { },
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                )
+            ) {
+                GlassBox(
+                    modifier = Modifier
+                        .width(260.dp)
+                        .height(150.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    borderWidth = 1.2.dp,
+                    isDarkTheme = false,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = skyBlueColor,
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(36.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = viewModel.loadingMessage,
+                            fontFamily = defaultFont,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black.copy(alpha = 0.85f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
     }
 
 @Composable
@@ -251,10 +298,15 @@ fun LoginFormFields(
                 .height(45.dp)
                 .background(color = greenCyanColor, shape = CircleShape)
                 .clip(CircleShape)
-                .clickable(enabled = true, onClick = {
+                .clickable(enabled = !viewModel.isLoading, onClick = {
                     if (username.isBlank() || password.isBlank()) {
                         NotificationManager.addToast(
                             "Please fill in Username and Password first.",
+                            isSuccess = false
+                        )
+                    } else if (appState.currentUserState != UserState.Normal) {
+                        NotificationManager.addToast(
+                            "Registration is restricted to Normal users.",
                             isSuccess = false
                         )
                     } else {
@@ -283,7 +335,7 @@ fun LoginFormFields(
                 .height(45.dp)
                 .background(color = skyBlueColor, shape = CircleShape)
                 .clip(CircleShape)
-                .clickable(enabled = true, onClick = {
+                .clickable(enabled = !viewModel.isLoading, onClick = {
                     viewModel.processUserLogin(
                         username,
                         password,
@@ -398,13 +450,13 @@ fun LoginFormFields(
                 Button(
                     onClick = {
                         if (registerPin.value.length == 4) {
+                            showRegisterPinDialog.value = false
                             viewModel.processRegisterUser(
                                 userNameInput = username,
                                 passwordInput = password,
                                 securityPinInput = registerPin.value,
                                 userState = appState.currentUserState
                             )
-                            showRegisterPinDialog.value = false
                             registerPin.value = ""
                         } else {
                             NotificationManager.addToast(
@@ -486,12 +538,12 @@ fun LoginFormFields(
             confirmButton = {
                 Button(
                     onClick = {
+                        showForgetPasswordDialog.value = false
                         viewModel.processForgetPassword(
                             usernameInput = resetUsername.value,
                             securityPinInput = resetPin.value,
                             newPasswordInput = resetNewPassword.value
                         )
-                        showForgetPasswordDialog.value = false
                         resetPin.value = ""
                         resetNewPassword.value = ""
                     },

@@ -25,6 +25,10 @@ class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
+    // 🌟 动态等待状态文案
+    var loadingMessage by mutableStateOf("Connecting To Database....")
+        private set
+
     suspend fun checkAutoLogin(onComplete: () -> Unit = {}): Boolean {
         if (appState.isDebuggerMode) {
             onComplete()
@@ -90,10 +94,13 @@ class LoginViewModel : ViewModel() {
     }
 
     fun processUserLogin(userName: String, password: String, userState: UserState) {
+        val trimmedUsername = userName.trim()
+        val trimmedPassword = password.trim()
+
         if (appState.isDebuggerMode) {
             val dummyUser = User(
-                userNameWithEmail = userName.ifBlank { "DebugUser" },
-                password = password.hashCode(),
+                userNameWithEmail = trimmedUsername.ifBlank { "DebugUser" },
+                password = trimmedPassword.hashCode(),
                 currentUserState = userState
             )
             appState.currentUser = dummyUser
@@ -107,18 +114,19 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        val trimmedEmail = "${userName.trim()}@recyclean.app"
-        val trimmedPassword = password.trim()
-
-        if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
+        if (trimmedUsername.isBlank() || trimmedPassword.isBlank()) {
             NotificationManager.addToast(
-                "Please fill in both email and password.",
+                "Please fill in both username and password.",
                 isSuccess = false
             )
             return
         }
 
+        val trimmedEmail = usernameToEmail(trimmedUsername)
+
+        // 🌟 开启加载并提示连接
         isLoading = true
+        loadingMessage = "Connecting To Database...."
 
         viewModelScope.launch {
             try {
@@ -131,7 +139,9 @@ class LoginViewModel : ViewModel() {
                 val uid = currentSupabaseUser?.id
 
                 if (uid != null) {
-                    fetchUserRoleAndNavigate(uid, trimmedEmail, expectedRole = userState)
+                    // 🌟 校验角色
+                    loadingMessage = "Verifying With Database...."
+                    fetchUserRoleAndNavigate(uid, trimmedUsername, expectedRole = userState)
                 } else {
                     isLoading = false
                     NotificationManager.addToast(
@@ -159,8 +169,7 @@ class LoginViewModel : ViewModel() {
                         }
                     }.decodeSingle<UserProfileDto>()
 
-                isLoading = false
-                val roleString = profile.role ?: "User"
+                val roleString = profile.role ?: "Normal"
                 val mappedState = when (roleString.lowercase()) {
                     "admin" -> UserState.Admin
                     "thirdparty" -> UserState.ThirdParty
@@ -179,6 +188,7 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
 
+                isLoading = false
                 appState.currentUserState = mappedState
                 appState.currentUser = User(
                     userNameWithEmail = username,
@@ -186,10 +196,11 @@ class LoginViewModel : ViewModel() {
                     currentUserState = mappedState
                 )
 
-                NotificationManager.addToast("Welcome back!", isSuccess = true)
+                NotificationManager.addToast("Welcome back, $username!", isSuccess = true)
                 appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
             } catch (e: Exception) {
                 isLoading = false
+                appState.supabase.auth.signOut()
                 NotificationManager.addToast(
                     "Failed to fetch user profile: ${e.localizedMessage}",
                     isSuccess = false
@@ -222,7 +233,7 @@ class LoginViewModel : ViewModel() {
 
         if (trimmedUsername.isBlank() || trimmedPassword.isBlank() || trimmedPin.isBlank()) {
             NotificationManager.addToast(
-                "Please enter both email and password to register.",
+                "Please fill in Username, Password, and Security PIN.",
                 isSuccess = false
             )
             return
@@ -245,9 +256,13 @@ class LoginViewModel : ViewModel() {
             return
         }
 
+        // 🌟 注册多阶段提示
         isLoading = true
+        loadingMessage = "Connecting To Database...."
+
         viewModelScope.launch {
             try {
+                loadingMessage = "Checking Username Availability...."
                 val existingUsers = appState.supabase.from("users")
                     .select {
                         filter { eq("username", trimmedUsername) }
@@ -262,6 +277,7 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
 
+                loadingMessage = "Creating Account & Syncing Profile...."
                 val virtualEmail = usernameToEmail(trimmedUsername)
                 appState.supabase.auth.signUpWith(Email) {
                     email = virtualEmail
@@ -275,14 +291,14 @@ class LoginViewModel : ViewModel() {
                         UserProfileDto(
                             id = newUser.id,
                             username = trimmedUsername,
-                            security_pin = trimmedPin, // 保存安全码
+                            security_pin = trimmedPin,
                             role = UserState.Normal.name
                         )
                     )
 
                     isLoading = false
                     NotificationManager.addToast("Registered successfully!", isSuccess = true)
-                    processUserLogin(trimmedUsername, trimmedPassword, userState)
+                    processUserLogin(trimmedUsername, trimmedPassword, UserState.Normal)
                 }
             } catch (e: Exception) {
                 isLoading = false
@@ -311,6 +327,14 @@ class LoginViewModel : ViewModel() {
             return
         }
 
+        if (trimmedNewPassword.length < 6) {
+            NotificationManager.addToast(
+                "New password must be at least 6 characters.",
+                isSuccess = false
+            )
+            return
+        }
+
         if (appState.isDebuggerMode) {
             NotificationManager.addToast(
                 "[Debug] Simulated sending password using pin",
@@ -320,6 +344,7 @@ class LoginViewModel : ViewModel() {
         }
 
         isLoading = true
+        loadingMessage = "Verifying Security PIN With Database...."
 
         viewModelScope.launch {
             try {
