@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.websockets)
     implementation(libs.kotlinx.serialization.json)
+    // GIF Decoder
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
