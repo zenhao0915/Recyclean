@@ -49,7 +49,7 @@ class LoginViewModel : ViewModel() {
 
                     val mappedState = when (profile.role?.lowercase()) {
                         "admin" -> UserState.Admin
-                        "thirdparty", "recycler" -> UserState.ThirdParty
+                        "thirdparty" -> UserState.ThirdParty
                         else -> UserState.Normal
                     }
 
@@ -131,7 +131,7 @@ class LoginViewModel : ViewModel() {
                 val uid = currentSupabaseUser?.id
 
                 if (uid != null) {
-                    fetchUserRoleAndNavigate(uid, trimmedEmail)
+                    fetchUserRoleAndNavigate(uid, trimmedEmail, expectedRole = userState)
                 } else {
                     isLoading = false
                     NotificationManager.addToast(
@@ -149,7 +149,7 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    private fun fetchUserRoleAndNavigate(uid: String, email: String) {
+    private fun fetchUserRoleAndNavigate(uid: String, username: String, expectedRole: UserState) {
         viewModelScope.launch {
             try {
                 val profile = appState.supabase.from("users")
@@ -161,16 +161,27 @@ class LoginViewModel : ViewModel() {
 
                 isLoading = false
                 val roleString = profile.role ?: "User"
-
                 val mappedState = when (roleString.lowercase()) {
                     "admin" -> UserState.Admin
-                    "thirdparty", "recycler" -> UserState.ThirdParty
+                    "thirdparty" -> UserState.ThirdParty
                     else -> UserState.Normal
+                }
+
+                if (mappedState != expectedRole) {
+                    appState.supabase.auth.signOut()
+                    appState.currentUser = null
+                    isLoading = false
+
+                    NotificationManager.addToast(
+                        "Access Denied: This account is registered as '${mappedState.name}', not '${expectedRole.name}'!",
+                        isSuccess = false
+                    )
+                    return@launch
                 }
 
                 appState.currentUserState = mappedState
                 appState.currentUser = User(
-                    userNameWithEmail = email,
+                    userNameWithEmail = username,
                     password = 0,
                     currentUserState = mappedState
                 )
@@ -187,6 +198,10 @@ class LoginViewModel : ViewModel() {
         }
     }
 
+    private fun usernameToEmail(username: String): String {
+        return username.trim().lowercase().replace(" ", "") + "@recyclean.app"
+    }
+
     fun processRegisterUser(
         userNameInput: String,
         passwordInput: String,
@@ -196,6 +211,14 @@ class LoginViewModel : ViewModel() {
         val trimmedUsername = userNameInput.trim()
         val trimmedPassword = passwordInput.trim()
         val trimmedPin = securityPinInput.trim()
+
+        if (userState != UserState.Normal) {
+            NotificationManager.addToast(
+                "Registration is restricted to Normal users. Merchants and Admins are pre-registered by system.",
+                isSuccess = false
+            )
+            return
+        }
 
         if (trimmedUsername.isBlank() || trimmedPassword.isBlank() || trimmedPin.isBlank()) {
             NotificationManager.addToast(
@@ -239,7 +262,7 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
 
-                val virtualEmail = "$trimmedUsername@recyclean.app".lowercase()
+                val virtualEmail = usernameToEmail(trimmedUsername)
                 appState.supabase.auth.signUpWith(Email) {
                     email = virtualEmail
                     password = trimmedPassword
@@ -253,7 +276,7 @@ class LoginViewModel : ViewModel() {
                             id = newUser.id,
                             username = trimmedUsername,
                             security_pin = trimmedPin, // 保存安全码
-                            role = userState.name
+                            role = UserState.Normal.name
                         )
                     )
 
