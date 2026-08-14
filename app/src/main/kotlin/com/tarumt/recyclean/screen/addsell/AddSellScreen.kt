@@ -1,9 +1,9 @@
 package com.tarumt.recyclean.screen.addsell
 
+import android.Manifest
 import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -64,6 +64,7 @@ import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.navigation.AddSellPageDestination
 import com.tarumt.recyclean.navigation.MeetingPageDestination
+import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.GlassBox
 import com.tarumt.recyclean.util.data.Appointment
@@ -88,7 +89,11 @@ fun String.convertToPart() = appState.apply {
 fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
     val sellerRowScrollState = rememberScrollState()
 
-    var manualInput by remember(appState.deviceToSell) { mutableStateOf(appState.deviceToSell ?: "") }
+    var manualInput by remember(appState.deviceToSell) {
+        mutableStateOf(
+            appState.deviceToSell ?: ""
+        )
+    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
@@ -97,7 +102,18 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
             viewModel.analyzeDeviceImage(bitmap)
         }
     }
-
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(null)
+        } else {
+            NotificationManager.addToast(
+                "Camera permission is required to scan devices.",
+                isSuccess = false
+            )
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,7 +173,9 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
             } ?: run {
                 GlassBox {
                     Button(
-                        onClick = { cameraLauncher.launch() }, shape = RoundedCornerShape(12.dp)
+                        onClick = {
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
+                        }, shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = "Take Photo (AI Scan)",
@@ -210,7 +228,12 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
         }
 
         if (viewModel.errorMessage.isNotEmpty()) {
-            Text(text = viewModel.errorMessage, color = Color.Red, fontSize = 13.sp, fontFamily = defaultFont)
+            Text(
+                text = viewModel.errorMessage,
+                color = Color.Red,
+                fontSize = 13.sp,
+                fontFamily = defaultFont
+            )
         }
 
         AnimatedVisibility(visible = viewModel.isAnalyzing) {
@@ -328,7 +351,8 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
 
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                val totalPrice = appState.cachedPartList.filter { it.isSelected }.sumOf { it.estimatedPrice }
+                val totalPrice =
+                    appState.cachedPartList.filter { it.isSelected }.sumOf { it.estimatedPrice }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -357,10 +381,13 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
 
                         if (selectedParts.isNotEmpty()) {
                             val currentEmail = appState.currentUser?.userNameWithEmail?.trim()
-                            val activeUserName = if (!currentEmail.isNullOrBlank()) currentEmail else "DebugUser"
+                            val activeUserName =
+                                if (!currentEmail.isNullOrBlank()) currentEmail else "DebugUser"
 
                             val newAppointment = Appointment(
-                                appointmentId = "APT-${System.currentTimeMillis().toString().takeLast(4)}",
+                                appointmentId = "APT-${
+                                    System.currentTimeMillis().toString().takeLast(4)
+                                }",
                                 userName = activeUserName,
                                 deviceName = appState.detectedDeviceName,
                                 scheduledDate = "Pending Date",
@@ -372,14 +399,18 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                             if (!appState.isDebuggerMode) {
                                 appState.scope.launch {
                                     try {
-                                        appState.supabase.from("appointments").insert(newAppointment.toDto())
+                                        appState.supabase.from("appointments")
+                                            .insert(newAppointment.toDto())
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     }
                                 }
                             }
                             appState.pendingAppointments.add(0, newAppointment)
-                            appState.navigator.navigateTo(MeetingPageDestination, appState.lastTouchOffset)
+                            appState.navigator.navigateTo(
+                                MeetingPageDestination,
+                                appState.lastTouchOffset
+                            )
 
                             appState.cachedBitmap = null
                             manualInput = ""
