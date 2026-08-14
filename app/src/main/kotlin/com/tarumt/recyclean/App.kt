@@ -44,6 +44,7 @@ import com.tarumt.recyclean.screen.addsell.AddSellScreen
 import com.tarumt.recyclean.screen.addsell.ThirdPartyAddSellScreen
 import com.tarumt.recyclean.screen.data.AdminDataScreen
 import com.tarumt.recyclean.screen.data.DefaultDataScreen
+import com.tarumt.recyclean.screen.data.ThirdPartyDataScreen
 import com.tarumt.recyclean.screen.meeting.DefaultMeetingScreen
 import com.tarumt.recyclean.screen.meeting.ThirdPartyMeetingScreen
 import com.tarumt.recyclean.screen.meeting.ThirdPartyVerificationScreen
@@ -135,6 +136,7 @@ fun App() {
                                 is DataPageDestination -> {
                                     when (currentUserState) {
                                         UserState.Admin -> AdminDataScreen()
+                                        UserState.ThirdParty -> ThirdPartyDataScreen()
                                         else -> DefaultDataScreen()
                                     }
                                 }
