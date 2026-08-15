@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen.meeting
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.VerificationPageDestination
 import com.tarumt.recyclean.notification.NotificationManager
-import com.tarumt.recyclean.screen.addsell.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.AppointmentDto
 import com.tarumt.recyclean.util.data.AppointmentStatus
@@ -31,9 +31,8 @@ class ThirdPartyMeetingViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    // 获取当前登录的商家名称（如 "SenHeng", "CompAsia"）
     val currentMerchantName: String
-        get() = appState.currentUser?.userName?.trim() ?: "SenHeng"
+        get() = appState.currentMerchantName
 
     init {
         fetchInitialAppointments()
@@ -41,31 +40,19 @@ class ThirdPartyMeetingViewModel : ViewModel() {
     }
 
     /**
-     * 🌟 1. 初次拉取：只获取分配给当前商家的 PENDING 订单
+     * 🌟 2. 初次拉取：使用 ilike 忽略大小写匹配 target_seller
      */
     fun fetchInitialAppointments() {
-        if (appState.isDebuggerMode) {
-            // Debug 模式下也执行商户数据隔离
-            appState.pendingAppointments.clear()
-            appState.pendingAppointments.addAll(
-                getMockAppointments().filter {
-                    it.targetSeller.equals(
-                        currentMerchantName,
-                        ignoreCase = true
-                    ) || it.targetSeller == "SenHeng"
-                }
-            )
-            return
-        }
+        if (appState.isDebuggerMode) return
 
         viewModelScope.launch {
             isLoading = true
             try {
-                // 🌟 核心过滤：target_seller = 当前登录商家 且 状态为 PENDING
+                // 🌟 使用 ilike 模糊忽略大小写匹配（如 "senheng" 匹配 "SenHeng"）
                 val dtos = appState.supabase.from("appointments")
                     .select {
                         filter {
-                            eq("target_seller", currentMerchantName)
+                            ilike("target_seller", "%$currentMerchantName%")
                             eq("status", "PENDING")
                         }
                     }
@@ -73,20 +60,32 @@ class ThirdPartyMeetingViewModel : ViewModel() {
 
                 appState.pendingAppointments.clear()
                 appState.pendingAppointments.addAll(dtos.map { it.toAppointment() }.reversed())
+
+                Log.d(
+                    "ThirdPartyMeeting",
+                    "Fetched ${dtos.size} appointments for $currentMerchantName"
+                )
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("ThirdPartyMeeting", "Failed to fetch appointments", e)
+                // 🌟 弹出详细报错信息，杜绝静默失败
+                NotificationManager.addToast(
+                    "Fetch error: ${e.localizedMessage}",
+                    isSuccess = false
+                )
             } finally {
                 isLoading = false
             }
         }
     }
 
+    /**
+     * 🌟 3. 实时监听推送
+     */
     private fun listenToRealtimeAppointments() {
         if (appState.isDebuggerMode) return
 
         viewModelScope.launch {
             try {
-                // 🌟 清理空格与特殊字符：例如 "PC Image" -> "pc_image"
                 val sanitizedMerchant = currentMerchantName.trim().lowercase().replace(" ", "_")
                 val channel = appState.supabase.channel("merchant_live_$sanitizedMerchant")
 
@@ -101,7 +100,7 @@ class ThirdPartyMeetingViewModel : ViewModel() {
                     val newDto = change.decodeRecord<AppointmentDto>()
                     val newAppointment = newDto.toAppointment()
 
-                    // 商家隔离比对（忽略大小写和空格）
+                    // 忽略大小写比对商家名称
                     if (newAppointment.targetSeller.trim()
                             .equals(currentMerchantName.trim(), ignoreCase = true) &&
                         newAppointment.status == AppointmentStatus.PENDING
@@ -119,7 +118,6 @@ class ThirdPartyMeetingViewModel : ViewModel() {
                 }.launchIn(viewModelScope)
 
             } catch (e: Exception) {
-                // 捕获异常避免崩溃影响主流程
                 e.printStackTrace()
             }
         }
@@ -140,17 +138,9 @@ class ThirdPartyMeetingViewModel : ViewModel() {
         appState.navigator.navigateTo(VerificationPageDestination, Offset.Zero)
     }
 
-    /**
-     * 🌟 3. 拒绝预约：将 Supabase 数据库对应订单状态标记为 CANCELLED
-     */
     fun rejectAppointment(appointment: Appointment) {
         appState.pendingAppointments.remove(appointment)
         closeApprovalDialog()
-
-        if (appState.isDebuggerMode) {
-            NotificationManager.addToast("[Debug] Appointment rejected.", isSuccess = true)
-            return
-        }
 
         viewModelScope.launch {
             try {
@@ -169,36 +159,5 @@ class ThirdPartyMeetingViewModel : ViewModel() {
                 )
             }
         }
-    }
-
-    private fun getMockAppointments(): List<Appointment> {
-        return listOf(
-            Appointment(
-                appointmentId = "APT-1001",
-                userName = "user_kevin",
-                deviceName = "iPhone 13 Pro",
-                scheduledDate = "15 Aug 2026",
-                estimatedValue = 450.00,
-                status = AppointmentStatus.PENDING,
-                selectedParts = listOf(
-                    SalvageablePart("Super Retina XDR Display", 320.0, true),
-                    SalvageablePart("LiDAR Scanner Unit", 130.0, true)
-                ),
-                targetSeller = "SenHeng"
-            ),
-            Appointment(
-                appointmentId = "APT-1002",
-                userName = "user_alice",
-                deviceName = "MacBook Air M2",
-                scheduledDate = "16 Aug 2026",
-                estimatedValue = 680.00,
-                status = AppointmentStatus.PENDING,
-                selectedParts = listOf(
-                    SalvageablePart("Liquid Retina Screen", 480.0, true),
-                    SalvageablePart("Touch ID Keyboard", 200.0, true)
-                ),
-                targetSeller = "CompAsia"
-            )
-        )
     }
 }

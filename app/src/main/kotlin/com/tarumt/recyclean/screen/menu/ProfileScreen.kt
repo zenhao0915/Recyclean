@@ -41,6 +41,7 @@ import com.tarumt.recyclean.common.vanillaColor
 import com.tarumt.recyclean.util.DrawGradeBox
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.data.Grade
+import com.tarumt.recyclean.util.data.UserState
 import com.tarumt.recyclean.util.data.UserTier
 
 @Composable
@@ -62,10 +63,12 @@ fun ProfileScreen() = DrawTemplate {
                 contentDescription = null
             )
         }
-
+        val username =
+            if (appState.currentUserState == UserState.ThirdParty) appState.currentMerchantName else appState.currentUser?.userName
+                ?: "NULL"
         Text(
             modifier = Modifier.offset(y = 12.dp),
-            text = appState.currentUser?.userName ?: "NULL",
+            text = username,
             fontFamily = defaultBoldFont,
             fontSize = 24.sp
         )
