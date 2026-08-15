@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen.menu
 
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,7 +49,19 @@ import com.tarumt.recyclean.util.data.UserTier
 
 @Composable
 @Preview
-fun ProfileScreen() = DrawTemplate {
+fun ProfileScreen() {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    if (isLandscape) {
+        ProfileScreenLandscape()
+    } else {
+        ProfileScreenPortrait()
+    }
+}
+
+@Composable
+fun ProfileScreenPortrait() = DrawTemplate {
     Row(
         modifier = Modifier.padding(bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
@@ -95,7 +110,6 @@ fun ProfileScreen() = DrawTemplate {
             .height(120.dp)
             .background(color = creamColor, shape = RoundedCornerShape(12.dp))
             .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp)),
-        //contentAlignment = Alignment.TopCenter
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
@@ -154,6 +168,133 @@ fun ProfileScreen() = DrawTemplate {
     }
 
     DrawAdminProfile()
+}
+
+@Composable
+fun ProfileScreenLandscape() = DrawTemplate {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .border(width = 1.5.dp, color = Color.Black, shape = CircleShape)
+                        .padding(3.dp)
+                ) {
+                    Image(
+                        modifier = Modifier.size(56.dp),
+                        painter = painterResource(R.drawable.profile),
+                        contentDescription = null
+                    )
+                }
+
+                val username =
+                    if (appState.currentUserState == UserState.ThirdParty) appState.currentMerchantName
+                    else appState.currentUser?.userName ?: "NULL"
+
+                Text(
+                    text = username,
+                    fontFamily = defaultBoldFont,
+                    fontSize = 20.sp
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = "Chat"
+                )
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings"
+                )
+            }
+        }
+
+        HorizontalDivider(thickness = 1.dp, color = Color.Black.copy(alpha = 0.3f))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(color = creamColor, shape = RoundedCornerShape(12.dp))
+                    .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp))
+                    .padding(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Welcome, ${appState.currentUser?.userName ?: "User"} !",
+                        fontFamily = defaultBoldFont,
+                        fontSize = 15.sp
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
+                    ) {
+                        DrawGradeBox(Grade.S_Plus, size = 42.dp, fontSize = 20.sp)
+
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            val currentTier = UserTier.Gold
+                            Text(
+                                text = "Current Tier Status",
+                                fontFamily = defaultFont,
+                                fontSize = defaultFontSize
+                            )
+                            Text(
+                                text = currentTier.name,
+                                fontFamily = defaultFont,
+                                fontSize = 22.sp,
+                                color = currentTier.color
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1.2f)
+                    .fillMaxHeight()
+                    .border(width = 0.5.dp, color = Color.Black, shape = RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No Result Currently",
+                    fontFamily = defaultFont,
+                    fontSize = defaultFontSize,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        DrawAdminProfile()
+    }
 }
 
 @Composable

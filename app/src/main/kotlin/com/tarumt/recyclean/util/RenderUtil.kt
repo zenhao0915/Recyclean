@@ -72,7 +72,6 @@ import com.tarumt.recyclean.util.data.Grade
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-
 enum class WindowWidthSizeClass { Compact, Medium, Expanded }
 
 @Composable
@@ -148,11 +147,14 @@ fun GlassBox(
     }
 }
 
+@Preview
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun DrawNavigator() = Box(
     contentAlignment = Alignment.BottomCenter,
-    modifier = Modifier.background(color = Color.Transparent)
+    modifier = Modifier
+        .background(color = Color.Transparent)
+        .padding(bottom = 36.dp)
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -337,7 +339,6 @@ fun DrawNavigator() = Box(
 }
 
 @Composable
-@Preview
 fun DrawResultBox(
     image: Painter = painterResource(R.drawable.ic_launcher_background),
     topicText: String = "iPhone 67 Pro",
@@ -518,15 +519,16 @@ fun GlassLiquidSwitch(
                     }
                 }
             }) {
-        Box(modifier = Modifier
-            .offset(x = if (isPressed) density.run { currentTrackingOffsetPx.toDp() } else targetOffsetDp)
-            .padding(vertical = padding)
-            .size(width = thumbWidth, height = normalThumbSize)
-            .clip(CircleShape)
-            .background(
-                if (isPressed) Color.Transparent.copy(alpha = 0.3f) else Color.White.copy(
-                    alpha = 0.9f
-                )
-            ))
+        Box(
+            modifier = Modifier
+                .offset(x = if (isPressed) density.run { currentTrackingOffsetPx.toDp() } else targetOffsetDp)
+                .padding(vertical = padding)
+                .size(width = thumbWidth, height = normalThumbSize)
+                .clip(CircleShape)
+                .background(
+                    if (isPressed) Color.Transparent.copy(alpha = 0.3f) else Color.White.copy(
+                        alpha = 0.9f
+                    )
+                ))
     }
 }
