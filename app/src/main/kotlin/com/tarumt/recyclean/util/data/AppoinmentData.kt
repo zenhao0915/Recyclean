@@ -1,6 +1,7 @@
 package com.tarumt.recyclean.util.data
 
 import com.tarumt.recyclean.screen.addsell.SalvageablePart
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -23,7 +24,14 @@ data class AppointmentDto(
     val created_at: String? = null
 )
 
-// 🌟 3. UI 界面使用的模型 (保持不变，避免影响其他 UI 页面)
+@Serializable
+data class AppointmentCompleteUpdateDto(
+    @SerialName("status")
+    val status: String,
+    @SerialName("estimated_value")
+    val estimatedValue: Double
+)
+
 data class Appointment(
     val appointmentId: String,
     val userName: String,

@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen.meeting
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +13,7 @@ import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
+import com.tarumt.recyclean.util.data.AppointmentCompleteUpdateDto
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
@@ -54,6 +56,7 @@ class ThirdPartyVerificationViewModel : ViewModel() {
     /**
      * 🌟 核心：完成验机并将 COMPLETED 状态与实收总额回写 Supabase
      */
+    @SuppressLint("DefaultLocale")
     fun completeTransaction() {
         val appt = currentAppointment ?: return
         val checkedParts = verifyingParts.filter { it.isSelected }
@@ -74,15 +77,13 @@ class ThirdPartyVerificationViewModel : ViewModel() {
             return
         }
 
-        // 2. Supabase 模式逻辑
         isSubmitting = true
         viewModelScope.launch {
             try {
-                // 更新 appointments 表中的状态和最终核定结算价
                 appState.supabase.from("appointments").update(
-                    mapOf(
-                        "status" to "COMPLETED",
-                        "estimated_value" to totalPayout
+                    AppointmentCompleteUpdateDto(
+                        status = "COMPLETED",
+                        estimatedValue = totalPayout
                     )
                 ) {
                     filter {

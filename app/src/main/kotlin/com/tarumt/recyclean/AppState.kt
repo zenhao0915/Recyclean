@@ -16,6 +16,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.coroutines.CoroutineScope
 
 class AppState {
@@ -29,6 +30,7 @@ class AppState {
         supabaseUrl = "https://cokpusdkqdwnltggirpd.supabase.co",
         supabaseKey = "sb_publishable_iPpoy81AmIAedZSDon_Sfg_8kIZq60e"
     ) {
+        httpEngine = OkHttp.create()
         install(Auth)
         install(Postgrest)
         install(Realtime)

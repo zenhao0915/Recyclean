@@ -61,7 +61,6 @@ class LoginViewModel : ViewModel() {
 
                     appState.currentUser = User(
                         userNameWithEmail = profile.username ?: email.substringBefore("@"),
-                        password = 0,
                         currentUserState = mappedState
                     )
 
@@ -100,7 +99,6 @@ class LoginViewModel : ViewModel() {
         if (appState.isDebuggerMode) {
             val dummyUser = User(
                 userNameWithEmail = trimmedUsername.ifBlank { "DebugUser" },
-                password = trimmedPassword.hashCode(),
                 currentUserState = userState
             )
             appState.currentUser = dummyUser
@@ -192,7 +190,6 @@ class LoginViewModel : ViewModel() {
                 appState.currentUserState = mappedState
                 appState.currentUser = User(
                     userNameWithEmail = username,
-                    password = 0,
                     currentUserState = mappedState
                 )
 
@@ -291,7 +288,7 @@ class LoginViewModel : ViewModel() {
                         UserProfileDto(
                             id = newUser.id,
                             username = trimmedUsername,
-                            security_pin = trimmedPin,
+                            securityPin = trimmedPin,
                             role = UserState.Normal.name
                         )
                     )

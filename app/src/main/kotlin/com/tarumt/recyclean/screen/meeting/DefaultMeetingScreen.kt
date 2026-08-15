@@ -47,6 +47,7 @@ import com.tarumt.recyclean.common.orangeCreamColor
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.util.DrawTemplate
 import com.tarumt.recyclean.util.data.Appointment
+import com.tarumt.recyclean.util.data.AppointmentStatus
 
 @Composable
 @Preview
@@ -87,7 +88,7 @@ fun DefaultMeetingScreen(
             CircularProgressIndicator(color = skyBlueColor, modifier = Modifier.padding(16.dp))
         }
 
-        if (appointments.isEmpty() && !viewModel.isLoading) {
+        if ((appointments.isEmpty() || (appointments.isNotEmpty() && appointments.all { it.status == AppointmentStatus.COMPLETED })) && !viewModel.isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -103,7 +104,6 @@ fun DefaultMeetingScreen(
                 )
             }
         } else {
-            // 直接遍历渲染所有 Card 列表
             appointments.forEach { appointment ->
                 UserAppointmentCard(
                     appointment = appointment,
@@ -113,7 +113,6 @@ fun DefaultMeetingScreen(
         }
     }
 
-    // --- 取消预约二次确认弹窗 ---
     viewModel.selectedAppointmentForCancel?.let { appt ->
         AlertDialog(
             onDismissRequest = { viewModel.closeCancelDialog() },

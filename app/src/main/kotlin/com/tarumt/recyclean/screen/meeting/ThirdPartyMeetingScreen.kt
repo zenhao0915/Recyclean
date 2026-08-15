@@ -62,6 +62,7 @@ fun ThirdPartyMeetingScreenPreview() {
     }
 }
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThirdPartyMeetingScreen(
@@ -69,7 +70,6 @@ fun ThirdPartyMeetingScreen(
     appointments: List<Appointment> = appState.pendingAppointments,
     onAppointmentClick: (String) -> Unit = { viewModel.openApprovalDialog(it) }
 ) {
-    // 进入界面时刷新当前商家的订单
     LaunchedEffect(Unit) {
         viewModel.fetchInitialAppointments()
     }
