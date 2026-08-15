@@ -34,6 +34,20 @@ class AppState {
         install(Realtime)
     }
 
+    val currentMerchantName: String
+    get() {
+        val raw = currentUser?.userName?.trim().orEmpty()
+        if (raw.isBlank()) return ""
+
+        val cleanRaw = raw.substringBefore("@").replace(" ", "").lowercase()
+        val matchedSeller = Sellers.entries.find { seller ->
+            seller.sellerName.replace(" ", "").lowercase() == cleanRaw ||
+                    seller.name.replace("_", "").lowercase() == cleanRaw
+        }
+
+        return matchedSeller?.sellerName ?: raw.substringBefore("@")
+    }
+
     val navigator = NavigatorState()
     var lastTouchOffset by mutableStateOf(Offset.Zero)
 
