@@ -65,6 +65,7 @@ fun App() {
     var isCheckingAutoLogin by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
+        if (!isCheckingAutoLogin) return@LaunchedEffect
         loginViewModel.checkAutoLogin {
             isCheckingAutoLogin = false
         }
