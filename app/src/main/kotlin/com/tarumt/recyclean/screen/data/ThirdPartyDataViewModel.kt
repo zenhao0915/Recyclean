@@ -1,6 +1,8 @@
 package com.tarumt.recyclean.screen.data
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,9 +18,10 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
 data class MerchantChartPoint(
-    val dateLabel: String,
+    val orderIndex: Int,
     val totalSpend: Double,
-    val orderCount: Int
+    val dateLabel: String,
+    val orderCount: Int = 1
 )
 
 class ThirdPartyDataViewModel : ViewModel() {
@@ -28,22 +31,22 @@ class ThirdPartyDataViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    var totalProcurementCost by mutableStateOf(0.0)
+    var totalProcurementCost by mutableDoubleStateOf(0.0)
         private set
 
-    var totalDevicesPurchased by mutableStateOf(0)
+    var totalDevicesPurchased by mutableIntStateOf(0)
         private set
 
-    var totalPartsAcquired by mutableStateOf(0)
+    var totalPartsAcquired by mutableIntStateOf(0)
         private set
 
-    // 🌟 图表绘图数据源
     var chartPoints by mutableStateOf<List<MerchantChartPoint>>(emptyList())
         private set
 
-    fun fetchMerchantData() {
-        val currentMerchantName = appState.currentUser?.userName?.trim() ?: "SenHeng"
+    private val currentMerchantName: String
+        get() = appState.currentUser?.userName?.substringBefore("@")?.trim() ?: "SenHeng"
 
+    fun fetchMerchantData() {
         if (appState.isDebuggerMode) {
             purchasedTransactions.clear()
             val filteredMock = getMockHistory().filter {
@@ -60,15 +63,17 @@ class ThirdPartyDataViewModel : ViewModel() {
                 val dtos = appState.supabase.from("appointments")
                     .select {
                         filter {
-                            eq("target_seller", currentMerchantName)
+                            ilike("target_seller", "%$currentMerchantName%")
                             eq("status", "COMPLETED")
                         }
                     }
                     .decodeList<AppointmentDto>()
 
+                val completedList = dtos.map { it.toAppointment() }
+
                 purchasedTransactions.clear()
-                purchasedTransactions.addAll(dtos.map { it.toAppointment() }.reversed())
-                calculateMetrics()
+                purchasedTransactions.addAll(completedList.reversed())
+                calculateMetrics(completedList)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -77,24 +82,24 @@ class ThirdPartyDataViewModel : ViewModel() {
         }
     }
 
-    private fun calculateMetrics() {
+    private fun calculateMetrics(rawList: List<Appointment>? = null) {
         totalProcurementCost = purchasedTransactions.sumOf { it.estimatedValue }
         totalDevicesPurchased = purchasedTransactions.size
         totalPartsAcquired = purchasedTransactions.sumOf { it.selectedParts.size }
 
-        // 🌟 按日期聚合生成图表点
-        chartPoints = if (purchasedTransactions.isEmpty()) {
+        val chronologicalList = rawList ?: purchasedTransactions.reversed()
+
+        chartPoints = if (chronologicalList.isEmpty()) {
             emptyList()
         } else {
-            purchasedTransactions
-                .groupBy { it.scheduledDate }
-                .map { (date, list) ->
-                    MerchantChartPoint(
-                        dateLabel = date.take(6), // 简化日期标签 (如 "02 Aug")
-                        totalSpend = list.sumOf { it.estimatedValue },
-                        orderCount = list.size
-                    )
-                }
+            chronologicalList.mapIndexed { index, appt ->
+                MerchantChartPoint(
+                    orderIndex = index + 1,
+                    totalSpend = appt.estimatedValue,
+                    dateLabel = "#${index + 1}",
+                    orderCount = 1
+                )
+            }
         }
     }
 

@@ -72,7 +72,6 @@ fun ThirdPartyDataScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 头部标题
         Text(
             text = "Procurement Analytics",
             fontFamily = defaultFont,
@@ -89,21 +88,18 @@ fun ThirdPartyDataScreen(
             textAlign = TextAlign.Center
         )
 
-        // 🌟 1. 商家采购概览卡片
         MerchantProcurementCard(
             totalSpend = viewModel.totalProcurementCost,
             devicesCount = viewModel.totalDevicesPurchased,
             partsCount = viewModel.totalPartsAcquired
         )
 
-        // 🌟 2. 交易量与支出趋势图表卡片 (Plotting Chart)
         if (chartPoints.isNotEmpty()) {
             ProcurementTrendChartCard(points = chartPoints)
         }
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // 列表标题
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start
@@ -121,7 +117,6 @@ fun ThirdPartyDataScreen(
             CircularProgressIndicator(color = skyBlueColor, modifier = Modifier.padding(16.dp))
         }
 
-        // 🌟 3. 采购历史订单列表
         if (transactions.isEmpty() && !viewModel.isLoading) {
             Box(
                 modifier = Modifier
@@ -146,7 +141,7 @@ fun ThirdPartyDataScreen(
 }
 
 /**
- * 🌟 交易趋势曲线图表卡片 (Canvas Plotting)
+ * 🌟 逐单交易趋势曲线图表卡片 (按单笔交易金额绘制)
  */
 @SuppressLint("DefaultLocale")
 @Composable
@@ -178,35 +173,41 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Procurement Spending Trend",
+                        text = "Transactions Done",
                         fontFamily = defaultFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = Color.Black
                     )
                 }
+
+                Text(
+                    text = "${points.size} Orders",
+                    fontFamily = defaultFont,
+                    fontSize = 8.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
-            // 🌟 Canvas 曲线与面积绘制
             val maxSpend = (points.maxOfOrNull { it.totalSpend } ?: 1.0).coerceAtLeast(100.0)
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .padding(vertical = 8.dp)
+                    .height(145.dp)
+                    .padding(top = 10.dp, bottom = 4.dp)
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val width = size.width
                     val height = size.height
                     val spacing = if (points.size > 1) width / (points.size - 1) else width
 
-                    // 绘制 3 条水平参考线
                     val gridSteps = 3
                     for (i in 0..gridSteps) {
                         val y = height * (i.toFloat() / gridSteps)
                         drawLine(
-                            color = Color.LightGray.copy(alpha = 0.4f),
+                            color = Color.LightGray.copy(alpha = 0.35f),
                             start = Offset(0f, y),
                             end = Offset(width, y),
                             strokeWidth = 1f
@@ -214,8 +215,8 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                     }
 
                     if (points.size == 1) {
-                        // 单点展示
-                        val pointY = height - (points[0].totalSpend.toFloat() / maxSpend.toFloat() * height)
+                        val pointY =
+                            height - (points[0].totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
                         drawCircle(
                             color = Color(0xFF2B6CB0),
                             radius = 6.dp.toPx(),
@@ -224,14 +225,13 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         return@Canvas
                     }
 
-                    // 计算所有点的坐标
                     val coordinates = points.mapIndexed { index, item ->
                         val x = index * spacing
-                        val y = height - (item.totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.85f))
+                        val y =
+                            height - (item.totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
                         Offset(x, y)
                     }
 
-                    // 构建贝塞尔平滑路径
                     val strokePath = Path().apply {
                         moveTo(coordinates.first().x, coordinates.first().y)
                         for (i in 0 until coordinates.size - 1) {
@@ -242,7 +242,6 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         }
                     }
 
-                    // 渐变填充闭合路径
                     val fillPath = Path().apply {
                         addPath(strokePath)
                         lineTo(coordinates.last().x, height)
@@ -250,7 +249,6 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         close()
                     }
 
-                    // 1. 绘制面积渐变
                     drawPath(
                         path = fillPath,
                         brush = Brush.verticalGradient(
@@ -263,14 +261,12 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         )
                     )
 
-                    // 2. 绘制平滑主线
                     drawPath(
                         path = strokePath,
                         color = Color(0xFF2B6CB0),
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
 
-                    // 3. 绘制节点圆圈
                     coordinates.forEach { offset ->
                         drawCircle(
                             color = Color.White,
@@ -286,19 +282,27 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 }
             }
 
-            // X 轴时间标签
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 points.forEach { point ->
-                    Text(
-                        text = point.dateLabel,
-                        fontFamily = defaultFont,
-                        fontSize = 10.sp,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = point.dateLabel,
+                            fontFamily = defaultFont,
+                            fontSize = 11.sp,
+                            color = Color(0xFF1A365D),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = String.format("RM %.0f", point.totalSpend),
+                            fontFamily = defaultFont,
+                            fontSize = 9.sp,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -417,7 +421,6 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 头部：设备名称 + 交易状态
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -457,7 +460,6 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 }
             }
 
-            // 客户账号与交易日期
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
@@ -492,7 +494,6 @@ fun MerchantTransactionCard(appointment: Appointment) {
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
 
-            // 回收零件明细
             Text(
                 text = "Acquired Parts Breakdown:",
                 fontFamily = defaultFont,
@@ -524,7 +525,6 @@ fun MerchantTransactionCard(appointment: Appointment) {
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
 
-            // 底部：采购支出结算
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
