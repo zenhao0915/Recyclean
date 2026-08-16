@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,14 +38,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
+import coil.request.ImageRequest
+import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.navigation.MeetingPageDestination
 import com.tarumt.recyclean.util.data.Appointment
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("DefaultLocale")
@@ -161,7 +173,6 @@ fun ThirdPartyVerificationScreen(
                 }
             }
 
-            // 底部结算与确认
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -191,7 +202,7 @@ fun ThirdPartyVerificationScreen(
 
                 Button(
                     onClick = { viewModel.completeTransaction() },
-                    enabled = !viewModel.isSubmitting,
+                    enabled = !viewModel.isSubmitting && !viewModel.doneSubmission,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A365D)),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
@@ -216,4 +227,77 @@ fun ThirdPartyVerificationScreen(
             }
         }
     }
+
+    if (viewModel.doneSubmission) {
+        LaunchedEffect(Unit) {
+            delay(2500L.milliseconds)
+            appState.navigator.navigateTo(MeetingPageDestination, Offset.Zero)
+        }
+
+        Dialog(
+            onDismissRequest = { },
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    DoneAnimation()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Payment Completed!",
+                        fontFamily = defaultFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color(0xFF2E7D32)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Transferred RM ${
+                            String.format(
+                                "%.2f",
+                                viewModel.totalPayout
+                            )
+                        } to ${appointment.userName}",
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
+                        color = Color.DarkGray
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DoneAnimation() {
+    val context = LocalContext.current
+    val imageLoader = ImageLoader.Builder(context)
+        .components {
+            add(ImageDecoderDecoder.Factory())
+        }
+        .build()
+
+    AsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(R.drawable.payment_done)
+            .crossfade(true)
+            .build(),
+        imageLoader = imageLoader,
+        contentDescription = "Payment Done Animation",
+        modifier = Modifier.size(160.dp)
+    )
 }
