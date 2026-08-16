@@ -223,7 +223,7 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) = DrawTemplate {
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Analyze Text with AI", fontFamily = defaultFont)
+                Text(text = "Predict Price with AI", fontFamily = defaultFont)
             }
         }
 

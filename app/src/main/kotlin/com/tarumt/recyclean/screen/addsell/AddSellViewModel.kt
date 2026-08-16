@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.appState
 import kotlinx.coroutines.Dispatchers
@@ -24,21 +26,54 @@ class AddSellViewModel : ViewModel() {
     var errorMessage by mutableStateOf("")
         private set
 
-    private val geminiModel by lazy { GenerativeModel(modelName = "gemini-3.5-flash-lite", apiKey = api_key) }
+    private val candidateModels = listOf(
+        "gemini-3.5-flash-lite",
+        "gemini-3.6-flash",
+        "gemini-3.7-flash",
+        "gemini-3.1-flash-lite"
+    )
+
+    private fun createModel(modelName: String): GenerativeModel {
+        return GenerativeModel(
+            modelName = modelName,
+            apiKey = api_key,
+            generationConfig = generationConfig {
+                responseMimeType = "application/json"
+                temperature = 0.1f
+            }
+        )
+    }
 
     private val baseAiPrompt = """
-        You are an expert in electronics salvage, repair, and e-waste recycling in Malaysia.
-        Analyze the provided input (image or text) and identify the device.
-        List exactly 3 to 10 valuable, functional salvageable parts/components that can be extracted from this device to be sold to third-party repair shops.
-        Estimate a reasonable market recycling value for each part in Malaysian Ringgit (RM).
-        
-        CRITICAL REQUIREMENT: You must reply ONLY with a valid JSON array. Do NOT wrap it in ```json ... ``` blocks, do NOT write introductory or concluding text.
-        Format example:
-        [
-          {"name": "A15 Bionic Motherboard (Motherboard)", "price": 320.0},
-          {"name": "OLED Screen Panel (Screen)", "price": 180.5}
-        ]
+        Identify device from input. Return 2-10 valuable salvageable parts with Malaysian market recycling prices in MYR (RM), sorted by value desc.
+        Format: JSON array only. Each item has "name" (with category in parentheses, e.g. "OLED Panel (Screen)") and "estimatedPrice" (numeric).
+        Return [] if non-electronic.
     """.trimIndent()
+
+    private suspend fun executeWithFallback(
+        action: suspend (GenerativeModel) -> GenerateContentResponse
+    ): String {
+        var lastException: Exception? = null
+
+        for (modelName in candidateModels) {
+            try {
+                Log.d("GeminiAI", "Attempting request with: $modelName")
+                val model = createModel(modelName)
+                val response = action(model)
+                val text = response.text
+
+                if (!text.isNullOrBlank()) {
+                    Log.d("GeminiAI", "Success using model: $modelName")
+                    return text
+                }
+            } catch (e: Exception) {
+                Log.w("GeminiAI", "Model $modelName failed: ${e.message}. Trying next backup model...")
+                lastException = e
+            }
+        }
+
+        throw lastException ?: IllegalStateException("All candidate models failed to return a response.")
+    }
 
     fun analyzeDeviceImage(bitmap: Bitmap) {
         appState.cachedBitmap = bitmap
@@ -48,18 +83,20 @@ class AddSellViewModel : ViewModel() {
             appState.showResult = false
 
             try {
-                val response = withContext(Dispatchers.IO) {
-                    geminiModel.generateContent(
-                        content {
-                            image(bitmap)
-                            text(baseAiPrompt)
-                        })
+                val jsonResult = withContext(Dispatchers.IO) {
+                    executeWithFallback { model ->
+                        model.generateContent(
+                            content {
+                                image(bitmap)
+                                text(baseAiPrompt)
+                            }
+                        )
+                    }
                 }
 
-                val jsonResult = response.text ?: ""
                 parseAndSaveJson(jsonResult, "Detected Smart Device")
             } catch (e: Exception) {
-                Log.e("GeminiAI", "Error calling API", e)
+                Log.e("GeminiAI", "All models failed for image analysis", e)
                 errorMessage = "AI Analysis Failed: Please try again."
             } finally {
                 isAnalyzing = false
@@ -73,16 +110,17 @@ class AddSellViewModel : ViewModel() {
             isAnalyzing = true
             appState.showResult = false
             try {
-                val response = withContext(Dispatchers.IO) {
-                    geminiModel.generateContent(
-                        "$baseAiPrompt\n\nUser Inputted Device Model: $manualInput"
-                    )
+                val jsonResult = withContext(Dispatchers.IO) {
+                    executeWithFallback { model ->
+                        model.generateContent(
+                            "$baseAiPrompt\n\nUser Inputted Device Model: $manualInput"
+                        )
+                    }
                 }
 
-                val jsonResult = response.text ?: ""
                 parseAndSaveJson(jsonResult, manualInput)
             } catch (e: Exception) {
-                Log.e("GeminiAI", "Error calling API", e)
+                Log.e("GeminiAI", "All models failed for text analysis", e)
                 errorMessage = "AI Parsing Failed: Check text input or connection."
             } finally {
                 isAnalyzing = false
@@ -99,7 +137,7 @@ class AddSellViewModel : ViewModel() {
             appState.cachedPartList.add(
                 SalvageablePart(
                     name = obj.getString("name"),
-                    estimatedPrice = obj.getDouble("price")
+                    estimatedPrice = obj.getDouble("estimatedPrice")
                 )
             )
         }
