@@ -241,7 +241,6 @@ fun UserPage(onUserClick: () -> Unit = {},
 
                 HorizontalDivider(Modifier.padding(horizontal = 0.dp, vertical = 10.dp), color = Color.Black)
 
-                HorizontalDivider(Modifier.padding(horizontal = 0.dp, vertical = 10.dp), color = Color.Black)
 
                 Text(
                     text = "Level = $level",
