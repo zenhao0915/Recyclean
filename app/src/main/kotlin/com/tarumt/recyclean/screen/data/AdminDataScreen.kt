@@ -58,7 +58,7 @@ import com.tarumt.recyclean.util.GlassBox
 
  @Composable
  @Preview
-fun AdminDataScreen() = DrawTemplate {
+ fun AdminDataScreen() = DrawTemplate {
      val dummyUsers = listOf(
          UserData(name = "Ling Yue", id = "1224"),
          UserData(name = "Alice Smith", id = "1001"),
@@ -68,89 +68,89 @@ fun AdminDataScreen() = DrawTemplate {
          UserData(name = "Evan Wright", id = "1005")
      )
 
-    Surface(modifier = Modifier.fillMaxWidth(), color = Color.White) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
-                .padding(top = 16.dp)
-                .background(Color(0xFF2D4A3E), shape = RoundedCornerShape(12.dp))
-                .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 30.dp, vertical = 10.dp)) {
-                Text(
-                    text = "User Profile Management",
-                    fontFamily = defaultBoldFont,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFF4F9F4),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
+     Surface(modifier = Modifier.fillMaxWidth(), color = Color.White) {
+         Box(
+             modifier = Modifier.fillMaxWidth()
+                 .padding(top = 16.dp)
+                 .background(Color(0xFF2D4A3E), shape = RoundedCornerShape(12.dp))
+                 .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
+         ) {
+             Column(modifier = Modifier.padding(horizontal = 30.dp, vertical = 10.dp)) {
+                 Text(
+                     text = "User Profile Management",
+                     fontFamily = defaultBoldFont,
+                     fontSize = 30.sp,
+                     fontWeight = FontWeight.Bold,
+                     color = Color(0xFFF4F9F4),
+                     textAlign = TextAlign.Center
+                 )
+             }
+         }
+     }
 
-    Spacer(modifier = Modifier.padding(2.dp))
+     Spacer(modifier = Modifier.padding(2.dp))
 
-    Surface(modifier = Modifier.fillMaxWidth(), color = Color.White) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
-                .padding(top = 16.dp)
-                .height(640.dp)
-                .background(Color(0xFFE1EAE5), shape = RoundedCornerShape(12.dp))
-                .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
-        ) {
-            Column(modifier = Modifier.padding(top = 16.dp)) {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = {
-                        Text(
-                            "Search user...",
-                            color = Color.DarkGray
-                        )
-                    },
-                    leadingIcon ={
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            tint = Color(0xFFFF94B8)
-                        )
-                    },
-                    shape = RoundedCornerShape(50.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2D4A3E),
-                        unfocusedBorderColor = Color(0xFFFF94B8),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal = 10.dp)
-                        .height(50.dp)
-                )
-            }
+     Surface(modifier = Modifier.fillMaxWidth(), color = Color.White) {
+         Box(
+             modifier = Modifier.fillMaxWidth()
+                 .padding(top = 16.dp)
+                 .height(640.dp)
+                 .background(Color(0xFFE1EAE5), shape = RoundedCornerShape(12.dp))
+                 .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
+         ) {
+             Column(modifier = Modifier.padding(top = 16.dp)) {
+                 OutlinedTextField(
+                     value = "",
+                     onValueChange = {},
+                     placeholder = {
+                         Text(
+                             "Search user...",
+                             color = Color.DarkGray
+                         )
+                     },
+                     leadingIcon ={
+                         Icon(
+                             imageVector = Icons.Default.Search,
+                             contentDescription = null,
+                             tint = Color(0xFFFF94B8)
+                         )
+                     },
+                     shape = RoundedCornerShape(50.dp),
+                     colors = OutlinedTextFieldDefaults.colors(
+                         focusedBorderColor = Color(0xFF2D4A3E),
+                         unfocusedBorderColor = Color(0xFFFF94B8),
+                         focusedContainerColor = Color.White,
+                         unfocusedContainerColor = Color.White
+                     ),
+                     modifier = Modifier.fillMaxWidth()
+                         .padding(horizontal = 10.dp)
+                         .height(50.dp)
+                 )
+             }
 
-            Box(modifier = Modifier.fillMaxWidth()
-                .padding(top = 80.dp)
-                .height(588.dp)
-                .background(Color.Transparent, shape = RoundedCornerShape(12.dp))){
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(dummyUsers) {users ->
-                        UserProfileBox(
-                            userName = users.name,
-                            userId = users.id
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+             Box(modifier = Modifier.fillMaxWidth()
+                 .padding(top = 80.dp)
+                 .height(588.dp)
+                 .background(Color.Transparent, shape = RoundedCornerShape(12.dp))){
+                 LazyColumn(
+                     modifier = Modifier.fillMaxWidth(),
+                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+                     verticalArrangement = Arrangement.spacedBy(10.dp)
+                 ) {
+                     items(dummyUsers) {users ->
+                         UserProfileBox(
+                             userName = users.name,
+                             userId = users.id
+                         )
+                     }
+                 }
+             }
+         }
+     }
+ }
 
-@Composable
-@Preview
+ @Composable
+ @Preview
  fun UserProfileBox( userName: String = "Linyue",
                      userId: String = "1234",
                      onUserClick: () -> Unit = {}) {
