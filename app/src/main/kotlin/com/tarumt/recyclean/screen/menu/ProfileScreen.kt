@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +62,9 @@ fun ProfileScreen() {
     }
 }
 
+// =============================================================================
+// 📱 1. Portrait View
+// =============================================================================
 @Composable
 fun ProfileScreenPortrait() = DrawTemplate {
     Row(
@@ -87,17 +92,6 @@ fun ProfileScreenPortrait() = DrawTemplate {
             fontFamily = defaultBoldFont,
             fontSize = 24.sp
         )
-
-        Icon(
-            modifier = Modifier.offset(y = 16.dp),
-            imageVector = Icons.AutoMirrored.Filled.Chat,
-            contentDescription = null
-        )
-        Icon(
-            modifier = Modifier.offset(y = 16.dp),
-            imageVector = Icons.Default.Settings,
-            contentDescription = null
-        )
     }
 
     HorizontalDivider(modifier = Modifier.scale(1.25f), thickness = 1.5.dp, color = Color.Black)
@@ -122,7 +116,7 @@ fun ProfileScreenPortrait() = DrawTemplate {
             ) {
                 Text(
                     modifier = Modifier.offset(y = 10.dp),
-                    text = "Welcome, ${appState.currentUser?.userName} !",
+                    text = "Welcome, ${appState.currentUser?.userName ?: "NULL"} !",
                     fontFamily = defaultBoldFont,
                     fontSize = 18.sp
                 )
@@ -156,18 +150,46 @@ fun ProfileScreenPortrait() = DrawTemplate {
             }
         }
     }
+    Spacer(Modifier.height(24.dp))
 
-    // Transaction History
-    Spacer(Modifier.height(30.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .border(width = 0.5.dp, color = Color.Black)
-    ) {
-        Text("No Result Currently")
+    Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxWidth()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                    contentDescription = null
+                )
+                Text(
+                    "Chat",
+                    fontFamily = defaultBoldFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = defaultFontSize
+                )
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null
+                )
+                Text(
+                    "Settings",
+                    fontFamily = defaultBoldFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = defaultFontSize
+                )
+            }
+        }
     }
-
-    DrawAdminProfile()
 }
 
 @Composable
@@ -180,46 +202,32 @@ fun ProfileScreenLandscape() = DrawTemplate {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Box(
+                modifier = Modifier
+                    .border(width = 1.5.dp, color = Color.Black, shape = CircleShape)
+                    .padding(3.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .border(width = 1.5.dp, color = Color.Black, shape = CircleShape)
-                        .padding(3.dp)
-                ) {
-                    Image(
-                        modifier = Modifier.size(56.dp),
-                        painter = painterResource(R.drawable.profile),
-                        contentDescription = null
-                    )
-                }
-
-                val username =
-                    if (appState.currentUserState == UserState.ThirdParty) appState.currentMerchantName
-                    else appState.currentUser?.userName ?: "NULL"
-
-                Text(
-                    text = username,
-                    fontFamily = defaultBoldFont,
-                    fontSize = 20.sp
+                Image(
+                    modifier = Modifier.size(56.dp),
+                    painter = painterResource(R.drawable.profile),
+                    contentDescription = null
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Chat,
-                    contentDescription = "Chat"
-                )
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings"
-                )
-            }
+            Spacer(modifier = Modifier.width(16.dp))
+
+            val username =
+                if (appState.currentUserState == UserState.ThirdParty) appState.currentMerchantName
+                else appState.currentUser?.userName ?: "NULL"
+
+            Text(
+                text = username,
+                fontFamily = defaultBoldFont,
+                fontSize = 20.sp
+            )
         }
 
         HorizontalDivider(thickness = 1.dp, color = Color.Black.copy(alpha = 0.3f))
@@ -232,7 +240,7 @@ fun ProfileScreenLandscape() = DrawTemplate {
         ) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1.2f)
                     .fillMaxHeight()
                     .background(color = creamColor, shape = RoundedCornerShape(12.dp))
                     .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp))
@@ -244,14 +252,17 @@ fun ProfileScreenLandscape() = DrawTemplate {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Welcome, ${appState.currentUser?.userName ?: "User"} !",
+                        text = "Welcome, ${appState.currentUser?.userName ?: "NULL"} !",
                         fontFamily = defaultBoldFont,
                         fontSize = 15.sp
                     )
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
+                        horizontalArrangement = Arrangement.spacedBy(
+                            16.dp,
+                            Alignment.CenterHorizontally
+                        )
                     ) {
                         DrawGradeBox(Grade.S_Plus, size = 42.dp, fontSize = 20.sp)
 
@@ -276,27 +287,53 @@ fun ProfileScreenLandscape() = DrawTemplate {
                 }
             }
 
+            // 右侧：Chat & Settings 菜单列表
             Box(
                 modifier = Modifier
-                    .weight(1.2f)
+                    .weight(1f)
                     .fillMaxHeight()
-                    .border(width = 0.5.dp, color = Color.Black, shape = RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                contentAlignment = Alignment.Center
+                    .border(width = 0.5.dp, color = Color.Black.copy(alpha = 0.3f), shape = RoundedCornerShape(12.dp))
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Text(
-                    text = "No Result Currently",
-                    fontFamily = defaultFont,
-                    fontSize = defaultFontSize,
-                    color = Color.Gray
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Chat,
+                            contentDescription = "Chat"
+                        )
+                        Text(
+                            "Chat",
+                            fontFamily = defaultBoldFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = defaultFontSize
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                        Text(
+                            "Settings",
+                            fontFamily = defaultBoldFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = defaultFontSize
+                        )
+                    }
+                }
             }
         }
-
-        DrawAdminProfile()
     }
-}
-
-@Composable
-private fun DrawAdminProfile() {
 }
