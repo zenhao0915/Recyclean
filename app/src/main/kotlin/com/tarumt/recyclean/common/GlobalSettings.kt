@@ -9,7 +9,7 @@ import com.tarumt.recyclean.AppState
 import com.tarumt.recyclean.R
 
 const val appTitle = "Recyclean"
-const val api_key = "AQ.Ab8RN6LfV_IQTcNCa80E6Yn-Dmv2VhTpt-T24kwmsE8qawwFwQ"
+const val api_key = "AQ.Ab8RN6KAKSIjRWRp_qMDvywX9-7TdgwDsQmB5huTZ-mFvX5YUQ"
 var appState = AppState()
 
 val defaultFont = FontFamily(Font(R.font.opensans_regular, FontWeight.Normal))
