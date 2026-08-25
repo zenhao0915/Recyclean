@@ -18,15 +18,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+        }
     }
 
     buildTypes {
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -48,21 +55,24 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.compose.material.icons.core)
     implementation(libs.compose.material.icons.extended)
+
     // Google Map API
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
+
     // Gemini API
     implementation(libs.generativeai)
+
     // Supabase
     implementation(platform(libs.bom))
     implementation(libs.postgrest.kt)
     implementation(libs.auth.kt)
     implementation(libs.realtime.kt)
     implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.websockets)
     implementation(libs.kotlinx.serialization.json)
+
     // GIF Decoder
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
