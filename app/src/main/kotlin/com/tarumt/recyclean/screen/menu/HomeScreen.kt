@@ -62,7 +62,6 @@ import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.vanillaColor
-import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.convertToPart
 import com.tarumt.recyclean.util.DrawResultBox
 import com.tarumt.recyclean.util.GlassBox
@@ -71,7 +70,6 @@ import com.tarumt.recyclean.util.data.ProductsCategory
 import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.UserState
 import com.tarumt.recyclean.util.openGoogleMap
-import kotlin.random.Random
 
 @Composable
 @Preview
@@ -340,14 +338,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                                 color = Color.Gray
                             )
                             Text(
-                                modifier = Modifier
-                                    .offset(x = 60.dp)
-                                    .clickable(true, onClick = {
-                                        NotificationManager.addToast(
-                                            "WALAO EH JOIS",
-                                            isSuccess = Random.nextBoolean()
-                                        )
-                                    }),
+                                modifier = Modifier.offset(x = 60.dp),
                                 text = "Redeem",
                                 fontFamily = defaultFont,
                                 fontSize = 16.sp,
@@ -684,7 +675,10 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                     .padding(12.dp)
             ) {
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        32.dp,
+                        Alignment.CenterHorizontally
+                    ),
                     verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
                     itemVerticalAlignment = Alignment.CenterVertically,
                     maxItemsInEachRow = 8
@@ -708,8 +702,16 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(imageVector = currentProduct.icons, contentDescription = currentProduct.name)
-                            Text(text = currentProduct.name, fontSize = defaultFontSize, fontFamily = defaultFont, maxLines = 1)
+                            Icon(
+                                imageVector = currentProduct.icons,
+                                contentDescription = currentProduct.name
+                            )
+                            Text(
+                                text = currentProduct.name,
+                                fontSize = defaultFontSize,
+                                fontFamily = defaultFont,
+                                maxLines = 1
+                            )
                         }
                     }
                 }
@@ -748,8 +750,17 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     modifier = Modifier.size(36.dp)
                                 )
                                 Column {
-                                    Text(text = "My Device", fontFamily = defaultBoldFont, fontSize = defaultFontSize)
-                                    Text(text = "RM 3770 (Estimated)", fontFamily = defaultFont, fontSize = 11.sp, color = Color.DarkGray)
+                                    Text(
+                                        text = "My Device",
+                                        fontFamily = defaultBoldFont,
+                                        fontSize = defaultFontSize
+                                    )
+                                    Text(
+                                        text = "RM 3770 (Estimated)",
+                                        fontFamily = defaultFont,
+                                        fontSize = 11.sp,
+                                        color = Color.DarkGray
+                                    )
                                 }
                             }
                             GlassBox(
@@ -757,7 +768,15 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                 isDarkTheme = true,
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), text = "Quote?", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    modifier = Modifier.padding(
+                                        horizontal = 8.dp,
+                                        vertical = 4.dp
+                                    ),
+                                    text = "Quote?",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -778,7 +797,12 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "\u1D3f\u1D396767", color = Color.White, fontFamily = defaultBoldFont, fontSize = 18.sp)
+                            Text(
+                                text = "\u1D3f\u1D396767",
+                                color = Color.White,
+                                fontFamily = defaultBoldFont,
+                                fontSize = 18.sp
+                            )
                             Box(
                                 contentAlignment = Alignment.CenterStart,
                                 modifier = Modifier
@@ -793,12 +817,18 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "Test", fontFamily = defaultFont, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    VerticalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 1.dp, color = Color.LightGray)
                                     Text(
-                                        modifier = Modifier.clickable {
-                                            NotificationManager.addToast("WALAO EH JOIS", isSuccess = Random.nextBoolean())
-                                        },
+                                        text = "Test",
+                                        fontFamily = defaultFont,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    VerticalDivider(
+                                        modifier = Modifier.padding(vertical = 4.dp).offset(x = 100.dp),
+                                        thickness = 1.dp,
+                                        color = Color.LightGray
+                                    )
+                                    Text(
                                         text = "Redeem",
                                         fontFamily = defaultFont,
                                         fontSize = 14.sp,
@@ -869,7 +899,11 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             .heightIn(max = 280.dp)
                             .padding(16.dp)
                             .background(color = Color.White, shape = RoundedCornerShape(16.dp))
-                            .border(color = Color.Black.copy(alpha = 0.2f), width = 0.5.dp, shape = RoundedCornerShape(16.dp))
+                            .border(
+                                color = Color.Black.copy(alpha = 0.2f),
+                                width = 0.5.dp,
+                                shape = RoundedCornerShape(16.dp)
+                            )
                     ) {
                         Column(
                             modifier = Modifier
@@ -887,14 +921,34 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text("Address: ", fontSize = 14.sp, fontFamily = defaultBoldFont)
-                                    Text(currentSeller.address, fontSize = 12.sp, fontFamily = defaultFont)
+                                    Text(
+                                        "Address: ",
+                                        fontSize = 14.sp,
+                                        fontFamily = defaultBoldFont
+                                    )
+                                    Text(
+                                        currentSeller.address,
+                                        fontSize = 12.sp,
+                                        fontFamily = defaultFont
+                                    )
 
                                     Text("Phone: ", fontSize = 14.sp, fontFamily = defaultBoldFont)
-                                    Text(currentSeller.phoneNumber, fontSize = 12.sp, fontFamily = defaultFont)
+                                    Text(
+                                        currentSeller.phoneNumber,
+                                        fontSize = 12.sp,
+                                        fontFamily = defaultFont
+                                    )
 
-                                    Text("Operation Time: ", fontSize = 14.sp, fontFamily = defaultBoldFont)
-                                    Text(currentSeller.operationTime, fontSize = 12.sp, fontFamily = defaultFont)
+                                    Text(
+                                        "Operation Time: ",
+                                        fontSize = 14.sp,
+                                        fontFamily = defaultBoldFont
+                                    )
+                                    Text(
+                                        currentSeller.operationTime,
+                                        fontSize = 12.sp,
+                                        fontFamily = defaultFont
+                                    )
                                 }
 
                                 Image(
@@ -972,8 +1026,14 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     modifier = Modifier.fillMaxWidth(),
                                     itemVerticalAlignment = Alignment.CenterVertically,
                                     maxItemsInEachRow = 5,
-                                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+                                    verticalArrangement = Arrangement.spacedBy(
+                                        12.dp,
+                                        Alignment.CenterVertically
+                                    ),
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        12.dp,
+                                        Alignment.CenterHorizontally
+                                    )
                                 ) {
                                     product.devices.forEach { device ->
                                         DrawResultBox(
