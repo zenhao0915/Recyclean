@@ -31,7 +31,12 @@ class ThirdPartyVerificationViewModel : ViewModel() {
 
     private var currentAppointment: Appointment? = null
 
+
     fun loadAppointment(appointment: Appointment) {
+        if (currentAppointment?.appointmentId == appointment.appointmentId && verifyingParts.isNotEmpty()) {
+            return
+        }
+
         currentAppointment = appointment
         verifyingParts.clear()
         doneSubmission = false
@@ -70,7 +75,6 @@ class ThirdPartyVerificationViewModel : ViewModel() {
                 "[Debug] RM ${String.format("%.2f", totalPayout)} paid to ${appt.userName}!",
                 isSuccess = true
             )
-            // 🌟 Debug 模式下也触发动画
             doneSubmission = true
             return
         }
@@ -96,7 +100,6 @@ class ThirdPartyVerificationViewModel : ViewModel() {
                     "Transaction successful! Transferred RM ${String.format("%.2f", totalPayout)} to ${appt.userName}.",
                     isSuccess = true
                 )
-                // 🌟 核心：触发状态后由 UI 播放完整动画后再执行跳转
                 doneSubmission = true
             } catch (e: Exception) {
                 isSubmitting = false
