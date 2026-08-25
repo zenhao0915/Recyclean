@@ -20,14 +20,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,59 +39,47 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class UserData(
-    val name: String,
-    val id: String,
-    val level: String = "Bronze",
-    var status: String = "Active",
-    val totalRevenue: String = "RM 1,250.00",
-    var isBlacklisted: Boolean = false,
-    var blacklistReason: String = ""
-)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tarumt.recyclean.common.bronzeColor
+import com.tarumt.recyclean.common.creamColor
+import com.tarumt.recyclean.common.defaultBoldFont
+import com.tarumt.recyclean.common.defaultFont
+import com.tarumt.recyclean.common.defaultFontSize
+import com.tarumt.recyclean.common.goldColor
+import com.tarumt.recyclean.common.lightBlueColor
+import com.tarumt.recyclean.common.orangeCreamColor
+import com.tarumt.recyclean.common.silverColor
+import com.tarumt.recyclean.common.skyBlueColor
+import com.tarumt.recyclean.common.vanillaColor
 
 @Composable
-fun AdminDataScreen(onNavigateToUserPage: (UserData) -> Unit = {}) {
-    val userList = remember {
-        mutableStateListOf(
-            UserData(name = "Ling Yue", id = "1224", level = "Gold", status = "Active", totalRevenue = "RM 3,450.00"),
-            UserData(name = "Alice Smith", id = "1001", level = "Silver", status = "Active", totalRevenue = "RM 890.00"),
-            UserData(name = "Bob Johnson", id = "1002", level = "Bronze", status = "Active", totalRevenue = "RM 420.00"),
-            UserData(name = "Charlie Brown", id = "1003", level = "Gold", status = "Active", totalRevenue = "RM 2,100.00"),
-            UserData(name = "Diana Prince", id = "1004", level = "Platinum", status = "Active", totalRevenue = "RM 5,600.00"),
-            UserData(name = "Evan Wright", id = "1005", level = "Bronze", status = "Inactive", totalRevenue = "RM 150.00")
-        )
+fun AdminDataScreen(
+    viewModel: AdminDataViewModel = viewModel()
+) {
+    LaunchedEffect(Unit) {
+        viewModel.fetchUsers()
     }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedUserId by remember { mutableStateOf<String?>(null) }
-
-    BackHandler(enabled = selectedUserId != null) {
-        selectedUserId = null
+    BackHandler(enabled = viewModel.selectedUserId != null) {
+        viewModel.selectedUserId = null
     }
 
-    val filteredUsers = userList.filter {
-        it.name.contains(searchQuery, ignoreCase = true) ||
-                it.id.contains(searchQuery, ignoreCase = true)
-    }
+    val currentUser = viewModel.selectedUser
+    val transactions = viewModel.completedTransactions
 
-    val currentUser = userList.find { it.id == selectedUserId }
-
-    // Wrap the entire screen in a Surface to provide a solid white background
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -100,90 +89,157 @@ fun AdminDataScreen(onNavigateToUserPage: (UserData) -> Unit = {}) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(12.dp)
+                        .padding(14.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    // 头部标题栏
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF2D4A3E), shape = RoundedCornerShape(12.dp))
-                            .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
+                            .background(orangeCreamColor, shape = RoundedCornerShape(12.dp))
+                            .border(width = 1.dp, vanillaColor, shape = RoundedCornerShape(12.dp))
                             .padding(vertical = 12.dp)
                     ) {
                         Text(
                             text = "User Profile Management",
-                            fontFamily = FontFamily.Default,
+                            fontFamily = defaultBoldFont,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF4F9F4),
+                            color = Color.White,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                    // 🌟 1. 用户管理与搜索区（高度短一半：260dp）
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFFE1EAE5), shape = RoundedCornerShape(12.dp))
-                            .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
+                            .fillMaxWidth()
+                            .height(260.dp)
+                            .background(
+                                creamColor.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .border(width = 1.dp, vanillaColor, shape = RoundedCornerShape(12.dp))
                             .padding(12.dp)
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                placeholder = { Text("Search user...", color = Color.DarkGray) },
+                                value = viewModel.searchQuery,
+                                onValueChange = { viewModel.searchQuery = it },
+                                placeholder = {
+                                    Text(
+                                        text = "Search user by name or ID...",
+                                        fontFamily = defaultFont,
+                                        fontSize = defaultFontSize,
+                                        color = Color.Gray
+                                    )
+                                },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Search,
                                         contentDescription = null,
-                                        tint = Color(0xFFFF94B8)
+                                        tint = skyBlueColor
                                     )
                                 },
                                 shape = RoundedCornerShape(50.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFF2D4A3E),
-                                    unfocusedBorderColor = Color(0xFFFF94B8),
+                                    focusedBorderColor = skyBlueColor,
+                                    unfocusedBorderColor = vanillaColor,
                                     focusedContainerColor = Color.White,
                                     unfocusedContainerColor = Color.White
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(50.dp)
+                                    .height(52.dp)
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                items(filteredUsers, key = { it.id }) { item ->
-                                    UserProfileBox(
-                                        userName = item.name,
-                                        userId = item.id,
-                                        onMoreInfoClick = { selectedUserId = item.id }
+                            if (viewModel.isLoading) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(color = skyBlueColor)
+                                }
+                            } else if (viewModel.filteredUsers.isEmpty()) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No matching users found.",
+                                        fontFamily = defaultFont,
+                                        color = Color.Gray,
+                                        fontSize = 13.sp
                                     )
+                                }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(
+                                        viewModel.filteredUsers,
+                                        key = { it.fullId.ifEmpty { it.id } }) { item ->
+                                        UserProfileBox(
+                                            userName = item.name,
+                                            userId = item.id,
+                                            onMoreInfoClick = { viewModel.selectedUserId = item.id }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+
+                    HorizontalDivider(color = vanillaColor, thickness = 1.dp)
+
+                    // 🌟 2. 底部个人交易记录（与 DefaultDataScreen 一致）
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        Text(
+                            text = "Completed Transactions (${transactions.size})",
+                            fontFamily = defaultBoldFont,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+
+                    if (transactions.isEmpty() && !viewModel.isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No completed transactions yet.\nCompleted orders will show up here!",
+                                fontFamily = defaultFont,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                fontSize = 13.sp
+                            )
+                        }
+                    } else {
+                        transactions.forEach { item ->
+                            TransactionCard(appointment = item)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             } else {
                 UserPage(
                     user = user,
-                    onBackClick = { selectedUserId = null },
+                    onBackClick = { viewModel.selectedUserId = null },
                     onSaveBlacklist = { newIsBlacklisted, newReason ->
-                        val index = userList.indexOfFirst { it.id == user.id }
-                        if (index != -1) {
-                            userList[index] = userList[index].copy(
-                                isBlacklisted = newIsBlacklisted,
-                                blacklistReason = newReason,
-                                status = if (newIsBlacklisted) "Blacklisted" else "Active"
-                            )
-                        }
-                        selectedUserId = null
+                        viewModel.saveBlacklist(user, newIsBlacklisted, newReason)
                     }
                 )
             }
@@ -191,6 +247,9 @@ fun AdminDataScreen(onNavigateToUserPage: (UserData) -> Unit = {}) {
     }
 }
 
+/**
+ * 🌟 用户信息简卡
+ */
 @Composable
 fun UserProfileBox(
     userName: String,
@@ -200,9 +259,9 @@ fun UserProfileBox(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(95.dp)
-            .background(Color(0xFFFFB7D9), shape = CutCornerShape(12.dp))
-            .border(width = 4.dp, color = Color(0xFFB1F0FF), shape = CutCornerShape(12.dp))
+            .height(82.dp)
+            .background(Color.White, shape = RoundedCornerShape(12.dp))
+            .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp))
     ) {
         Row(
             modifier = Modifier
@@ -211,18 +270,27 @@ fun UserProfileBox(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                Modifier
-                    .size(50.dp)
-                    .background(Color.White, shape = CircleShape)
-            )
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(lightBlueColor.copy(alpha = 0.4f), shape = CircleShape)
+                    .border(0.5.dp, skyBlueColor.copy(alpha = 0.3f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = skyBlueColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Name: $userName",
-                    fontFamily = FontFamily.Default,
-                    fontSize = 15.sp,
+                    fontFamily = defaultBoldFont,
+                    fontSize = 13.sp,
                     color = Color.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -232,9 +300,9 @@ fun UserProfileBox(
 
                 Text(
                     text = "ID: $userId",
-                    fontFamily = FontFamily.Default,
-                    fontSize = 15.sp,
-                    color = Color.Black,
+                    fontFamily = defaultFont,
+                    fontSize = 12.sp,
+                    color = Color.DarkGray,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -244,22 +312,25 @@ fun UserProfileBox(
 
             Button(
                 onClick = onMoreInfoClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4A3E)),
+                colors = ButtonDefaults.buttonColors(containerColor = skyBlueColor.copy(alpha = 0.8f)),
                 shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "More Info",
-                    fontFamily = FontFamily.Default,
+                    fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color(0xFFF4F9F4)
+                    fontSize = 11.sp,
+                    color = Color.White
                 )
             }
         }
     }
 }
 
+/**
+ * 🌟 用户详情与风控封禁页
+ */
 @Composable
 fun UserPage(
     user: UserData,
@@ -269,13 +340,20 @@ fun UserPage(
     var isBlacklisted by remember(user.id) { mutableStateOf(user.isBlacklisted) }
     var blacklistReason by remember(user.id) { mutableStateOf(user.blacklistReason) }
 
+    val levelBadgeColor = when (user.level.lowercase()) {
+        "gold" -> goldColor
+        "silver" -> silverColor
+        "bronze" -> bronzeColor
+        else -> skyBlueColor
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(12.dp)
-            .background(Color(0xFFE1EAE5), shape = RoundedCornerShape(12.dp))
-            .border(width = 2.dp, color = Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
-            .padding(12.dp)
+            .background(creamColor.copy(alpha = 0.3f), shape = RoundedCornerShape(12.dp))
+            .border(width = 1.dp, color = vanillaColor, shape = RoundedCornerShape(12.dp))
+            .padding(14.dp)
     ) {
         Column(
             Modifier
@@ -289,16 +367,15 @@ fun UserPage(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color(0xFF2D4A3E)
+                        contentDescription = "Back"
                     )
                 }
                 Text(
                     text = "User Details",
-                    fontFamily = FontFamily.Default,
+                    fontFamily = defaultBoldFont,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2D4A3E)
+                    color = Color.Black
                 )
             }
 
@@ -306,17 +383,26 @@ fun UserPage(
 
             Box(
                 Modifier
-                    .size(90.dp)
-                    .background(Color.White, shape = CircleShape)
-                    .align(Alignment.CenterHorizontally)
-            )
+                    .size(80.dp)
+                    .background(lightBlueColor.copy(alpha = 0.3f), shape = CircleShape)
+                    .border(1.dp, skyBlueColor.copy(alpha = 0.4f), CircleShape)
+                    .align(Alignment.CenterHorizontally),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = skyBlueColor,
+                    modifier = Modifier.size(44.dp)
+                )
+            }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Text(
                 text = "Username: ${user.name}",
-                fontFamily = FontFamily.Default,
-                fontSize = 18.sp,
+                fontFamily = defaultBoldFont,
+                fontSize = 16.sp,
                 color = Color.Black
             )
 
@@ -324,27 +410,39 @@ fun UserPage(
 
             Text(
                 text = "ID: ${user.id}",
-                fontFamily = FontFamily.Default,
-                fontSize = 18.sp,
-                color = Color.Black
+                fontFamily = defaultFont,
+                fontSize = 15.sp,
+                color = Color.DarkGray
             )
 
-            HorizontalDivider(Modifier.padding(vertical = 10.dp), color = Color.Black)
-
-            Text(
-                text = "Level: ${user.level}",
-                fontFamily = FontFamily.Default,
-                fontSize = 18.sp,
-                color = Color.Black
+            HorizontalDivider(
+                Modifier.padding(vertical = 10.dp),
+                color = vanillaColor,
+                thickness = 1.dp
             )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Level: ",
+                    fontFamily = defaultFont,
+                    fontSize = 15.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = user.level,
+                    fontFamily = defaultBoldFont,
+                    fontSize = 16.sp,
+                    color = levelBadgeColor
+                )
+            }
 
             Spacer(Modifier.height(4.dp))
 
             Text(
                 text = "Status: ${if (isBlacklisted) "Blacklisted" else user.status}",
-                fontFamily = FontFamily.Default,
-                fontSize = 18.sp,
-                color = if (isBlacklisted) Color(0xFFD9534F) else Color.Black
+                fontFamily = defaultFont,
+                fontSize = 15.sp,
+                color = if (isBlacklisted) orangeCreamColor else Color(0xFF2E7D32)
             )
 
             Spacer(Modifier.height(12.dp))
@@ -352,34 +450,38 @@ fun UserPage(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2D4A3E), shape = RoundedCornerShape(12.dp))
-                    .border(width = 2.dp, Color(0xFFBDA55D), shape = RoundedCornerShape(12.dp))
+                    .background(skyBlueColor, shape = RoundedCornerShape(12.dp))
+                    .border(width = 1.dp, vanillaColor, shape = RoundedCornerShape(12.dp))
                     .padding(14.dp)
             ) {
                 Column {
                     Text(
                         text = "Total Account Revenue",
-                        fontFamily = FontFamily.Default,
-                        fontSize = 14.sp,
-                        color = Color(0xFFBDA55D)
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
+                        color = creamColor
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = user.totalRevenue,
-                        fontFamily = FontFamily.Default,
-                        fontSize = 22.sp,
+                        fontFamily = defaultBoldFont,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFF4F9F4)
+                        color = goldColor
                     )
                 }
             }
 
-            HorizontalDivider(Modifier.padding(vertical = 12.dp), color = Color.Black)
+            HorizontalDivider(
+                Modifier.padding(vertical = 12.dp),
+                color = vanillaColor,
+                thickness = 1.dp
+            )
 
             Text(
                 text = "Account Moderation",
-                fontFamily = FontFamily.Default,
-                fontSize = 18.sp,
+                fontFamily = defaultBoldFont,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
@@ -394,15 +496,15 @@ fun UserPage(
                     selected = isBlacklisted,
                     onClick = { isBlacklisted = !isBlacklisted },
                     colors = RadioButtonDefaults.colors(
-                        selectedColor = Color(0xFFD9534F),
+                        selectedColor = orangeCreamColor,
                         unselectedColor = Color.DarkGray
                     )
                 )
                 Text(
                     text = "Blacklist Account",
-                    fontFamily = FontFamily.Default,
-                    fontSize = 16.sp,
-                    color = if (isBlacklisted) Color(0xFFD9534F) else Color.Black,
+                    fontFamily = defaultFont,
+                    fontSize = 15.sp,
+                    color = if (isBlacklisted) orangeCreamColor else Color.Black,
                     fontWeight = if (isBlacklisted) FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier.padding(start = 6.dp)
                 )
@@ -417,6 +519,8 @@ fun UserPage(
                 label = {
                     Text(
                         text = if (isBlacklisted) "Reason for Blacklisting" else "Enable blacklist to enter reason",
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
                         color = if (isBlacklisted) Color.DarkGray else Color.Gray
                     )
                 },
@@ -425,31 +529,31 @@ fun UserPage(
                     .height(100.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFD9534F),
-                    unfocusedBorderColor = Color(0xFF2D4A3E),
-                    disabledBorderColor = Color.LightGray,
+                    focusedBorderColor = orangeCreamColor,
+                    unfocusedBorderColor = vanillaColor,
+                    disabledBorderColor = Color.LightGray.copy(alpha = 0.5f),
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
-                    disabledContainerColor = Color(0xFFE0E0E0)
+                    disabledContainerColor = Color(0xFFF9F9F9)
                 )
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Button(
                 onClick = { onSaveBlacklist(isBlacklisted, blacklistReason) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D4A3E)),
+                colors = ButtonDefaults.buttonColors(containerColor = skyBlueColor),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "Save Changes",
-                    fontFamily = FontFamily.Default,
+                    fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color(0xFFF4F9F4)
+                    color = Color.White
                 )
             }
         }

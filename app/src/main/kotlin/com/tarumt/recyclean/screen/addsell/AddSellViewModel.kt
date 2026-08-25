@@ -13,6 +13,10 @@ import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.notification.NotificationManager
+import com.tarumt.recyclean.util.data.UserProfileDto
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,6 +54,33 @@ class AddSellViewModel : ViewModel() {
         Return [] if non-electronic.
     """.trimIndent()
 
+    // 🌟 检查当前操作者是否已被黑名单封禁
+    private suspend fun checkIsUserBlacklisted(): Boolean {
+        if (appState.isDebuggerMode) return false
+
+        val uid = appState.supabase.auth.currentUserOrNull()?.id ?: return false
+        return try {
+            val profile = appState.supabase.from("users").select {
+                filter { eq("id", uid) }
+            }.decodeSingle<UserProfileDto>()
+
+            if (profile.isBlacklisted == true) {
+                val reason = profile.blacklistReason?.ifBlank { "Violation of platform policies" }
+                    ?: "Violation of platform policies"
+                NotificationManager.addToast(
+                    "Action Denied: Your account is blacklisted ($reason).",
+                    isSuccess = false,
+                    isPriority = true
+                )
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private suspend fun executeWithFallback(
         action: suspend (GenerativeModel) -> GenerateContentResponse
     ): String {
@@ -79,6 +110,9 @@ class AddSellViewModel : ViewModel() {
         appState.cachedBitmap = bitmap
         errorMessage = ""
         viewModelScope.launch {
+            // 🌟 触发 AI 分析前检查黑名单
+            if (checkIsUserBlacklisted()) return@launch
+
             isAnalyzing = true
             appState.showResult = false
 
@@ -107,6 +141,9 @@ class AddSellViewModel : ViewModel() {
     fun analyzeDeviceText(manualInput: String) {
         errorMessage = ""
         viewModelScope.launch {
+            // 🌟 触发 AI 分析前检查黑名单
+            if (checkIsUserBlacklisted()) return@launch
+
             isAnalyzing = true
             appState.showResult = false
             try {
