@@ -16,8 +16,11 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -25,31 +28,46 @@ class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    // 🌟 动态等待状态文案
     var loadingMessage by mutableStateOf("Connecting To Database....")
         private set
-
     suspend fun checkAutoLogin(onComplete: () -> Unit = {}): Boolean {
         if (appState.isDebuggerMode) {
             onComplete()
             return false
         }
 
-        return try {
-            val isSuccess = withTimeoutOrNull(3000L.milliseconds) {
-                appState.supabase.auth.awaitInitialization()
+        return withContext(Dispatchers.IO) {
+            try {
+                val isSuccess = withTimeoutOrNull(8000L.milliseconds) {
+                    appState.supabase.auth.awaitInitialization()
 
-                val currentSession = appState.supabase.auth.currentSessionOrNull()
-                val currentSupabaseUser = appState.supabase.auth.currentUserOrNull()
+                    val currentSession = appState.supabase.auth.currentSessionOrNull()
+                    val currentSupabaseUser = appState.supabase.auth.currentUserOrNull()
 
-                if (currentSession != null && currentSupabaseUser != null) {
+                    if (currentSession == null || currentSupabaseUser == null) {
+                        return@withTimeoutOrNull false
+                    }
+
                     val uid = currentSupabaseUser.id
-                    val email = currentSupabaseUser.email ?: ""
+                    val email = currentSupabaseUser.email.orEmpty()
 
                     val profile = appState.supabase.from("users")
-                        .select {
+                        .select(Columns.list("id", "username", "role", "is_blacklisted", "blacklist_reason")) {
                             filter { eq("id", uid) }
                         }.decodeSingle<UserProfileDto>()
+
+                    if (profile.isBlacklisted == true) {
+                        appState.supabase.auth.signOut()
+                        appState.currentUser = null
+                        val reason = profile.blacklistReason?.ifBlank { "Violation of platform policies" }
+                            ?: "Violation of platform policies"
+                        NotificationManager.addToast(
+                            "Account suspended: $reason",
+                            isSuccess = false,
+                            isPriority = true
+                        )
+                        return@withTimeoutOrNull false
+                    }
 
                     val mappedState = when (profile.role?.lowercase()) {
                         "admin" -> UserState.Admin
@@ -58,7 +76,6 @@ class LoginViewModel : ViewModel() {
                     }
 
                     appState.currentUserState = mappedState
-
                     appState.currentUser = User(
                         userNameWithEmail = profile.username ?: email.substringBefore("@"),
                         currentUserState = mappedState
@@ -66,29 +83,23 @@ class LoginViewModel : ViewModel() {
 
                     NotificationManager.addToast("Session Restored!", isSuccess = true)
 
-                    appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
+                    // 切回主线程执行页面跳转
+                    withContext(Dispatchers.Main) {
+                        appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
+                    }
                     true
-                } else {
-                    appState.currentUser = null
-                    false
                 }
-            }
-            if (isSuccess == null) {
-                Log.w(
-                    "AutoLogin",
-                    "Auto login check timed out after 3 seconds. Falling back to LoginScreen."
-                )
+
+                isSuccess ?: false
+            } catch (e: Exception) {
+                Log.e("AutoLogin", "Error during auto login check", e)
                 appState.currentUser = null
                 false
-            } else {
-                isSuccess
+            } finally {
+                withContext(Dispatchers.Main) {
+                    onComplete()
+                }
             }
-        } catch (e: Exception) {
-            Log.e("AutoLogin", "Error during auto login check", e)
-            appState.currentUser = null
-            false
-        } finally {
-            onComplete()
         }
     }
 
@@ -122,7 +133,6 @@ class LoginViewModel : ViewModel() {
 
         val trimmedEmail = usernameToEmail(trimmedUsername)
 
-        // 🌟 开启加载并提示连接
         isLoading = true
         loadingMessage = "Connecting To Database...."
 
@@ -137,8 +147,7 @@ class LoginViewModel : ViewModel() {
                 val uid = currentSupabaseUser?.id
 
                 if (uid != null) {
-                    // 🌟 校验角色
-                    loadingMessage = "Verifying With Database...."
+                    loadingMessage = "Verifying Account Status...."
                     fetchUserRoleAndNavigate(uid, trimmedUsername, expectedRole = userState)
                 } else {
                     isLoading = false
@@ -166,6 +175,23 @@ class LoginViewModel : ViewModel() {
                             eq("id", uid)
                         }
                     }.decodeSingle<UserProfileDto>()
+
+                // 🌟 2. 正常登录拦截：若已封禁，登出并提示原因
+                if (profile.isBlacklisted == true) {
+                    appState.supabase.auth.signOut()
+                    appState.currentUser = null
+                    isLoading = false
+
+                    val reason =
+                        profile.blacklistReason?.ifBlank { "Violation of platform policies" }
+                            ?: "Violation of platform policies"
+                    NotificationManager.addToast(
+                        "Login Denied: Your account has been blacklisted. Reason: $reason",
+                        isSuccess = false,
+                        isPriority = true
+                    )
+                    return@launch
+                }
 
                 val roleString = profile.role ?: "Normal"
                 val mappedState = when (roleString.lowercase()) {
@@ -253,7 +279,6 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        // 🌟 注册多阶段提示
         isLoading = true
         loadingMessage = "Connecting To Database...."
 
