@@ -68,7 +68,7 @@ fun DefaultMeetingScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
-            text = "My Recycling Appointments",
+            text = "My Appointments",
             fontFamily = defaultFont,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
@@ -96,7 +96,7 @@ fun DefaultMeetingScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No appointments found.\nGo to Recycle page to assign items!",
+                    text = "No active appointments found.\nGo to Recycle page to assign items!",
                     fontFamily = defaultBoldFont,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
@@ -105,6 +105,7 @@ fun DefaultMeetingScreen(
             }
         } else {
             appointments.forEach { appointment ->
+                if (appointment.status == AppointmentStatus.PENDING)
                 UserAppointmentCard(
                     appointment = appointment,
                     onCancelClick = { viewModel.openCancelDialog(appointment) }
