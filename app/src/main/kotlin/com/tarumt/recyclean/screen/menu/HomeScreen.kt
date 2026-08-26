@@ -1,6 +1,7 @@
 package com.tarumt.recyclean.screen.menu
 
 import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,10 +25,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
@@ -47,8 +51,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -87,28 +94,59 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
 @Composable
 fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
+    val focusManager = LocalFocusManager.current
+
+    var searchQuery by remember { mutableStateOf("") }
     var drawPopup by remember { mutableStateOf(false) }
     var currentProductSelected by remember { mutableStateOf<ProductsCategory?>(null) }
     var currentSellersSelected by remember { mutableStateOf<Sellers?>(null) }
+
+    val filteredSellers = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            Sellers.entries.toList()
+        } else {
+            Sellers.entries.filter { seller ->
+                seller.sellerName.contains(searchQuery, ignoreCase = true) ||
+                        seller.address.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    val dismissSearch = {
+        if (searchQuery.isNotEmpty()) {
+            searchQuery = ""
+        }
+        focusManager.clearFocus()
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color.White)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = dismissSearch
+            )
     ) {
         Column(
             modifier = Modifier
-                .fillMaxHeight(0.98f)
-                .verticalScroll(scrollableState),
+                .fillMaxSize()
+                .verticalScroll(scrollableState)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = dismissSearch
+                )
+                .padding(bottom = 80.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Top
         ) {
-            // Search Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp, horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(vertical = 14.dp, horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -119,38 +157,76 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout"
                 )
+
                 Box(
                     modifier = Modifier
-                        .width(290.dp)
-                        .height(25.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .border(1.dp, Color.Black, shape = RoundedCornerShape(4.dp))
+                        .width(260.dp)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 6.dp),
-                            text = "Enter To Search..",
-                            fontSize = defaultFontSize,
-                            fontFamily = defaultFont
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontFamily = defaultFont,
+                                fontSize = defaultFontSize,
+                                color = Color.Black
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                            modifier = Modifier.weight(1f),
+                            decorationBox = { innerTextField ->
+                                Box(contentAlignment = Alignment.CenterStart) {
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Search third party...",
+                                            fontSize = defaultFontSize,
+                                            fontFamily = defaultFont,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
                         )
-                        Spacer(Modifier.width(90.dp))
+
+                        if (searchQuery.isNotEmpty()) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { searchQuery = "" }
+                            )
+                        }
+
                         VerticalDivider(
-                            modifier = Modifier.padding(vertical = 6.dp),
-                            thickness = 2.dp
-                        )
-                        Text(
                             modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .offset(x = 4.dp),
+                                .height(16.dp)
+                                .padding(horizontal = 6.dp),
+                            thickness = 1.dp,
+                            color = Color.LightGray
+                        )
+
+                        Text(
+                            modifier = Modifier.clickable { focusManager.clearFocus() },
                             text = "Search",
                             fontSize = defaultFontSize,
                             fontFamily = defaultBoldFont
                         )
                     }
                 }
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -159,28 +235,37 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
+                            .padding(2.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "ChatButton"
+                            contentDescription = "ChatButton",
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
+                            .padding(2.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Wallet, contentDescription = "Wallet")
+                        Icon(
+                            imageVector = Icons.Default.Wallet,
+                            contentDescription = "Wallet",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
 
             Box(
                 modifier = Modifier
                     .height(30.dp)
                     .background(color = creamColor, shape = RoundedCornerShape(8.dp))
                     .border(0.5.dp, color = creamColor, shape = RoundedCornerShape(8.dp))
-                    .padding(4.dp)
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "Products Category",
@@ -190,7 +275,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
             }
 
             // Goods Category
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -221,6 +306,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
                                         onClick = {
+                                            dismissSearch()
                                             if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
                                                 drawPopup = true
                                                 currentProductSelected = currentProduct
@@ -246,7 +332,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
             }
 
             // My Device
-            Spacer(Modifier.height(15.dp))
+            Spacer(Modifier.height(16.dp))
             GlassBox(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -282,7 +368,10 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                         )
                     }
                     GlassBox(
-                        modifier = Modifier,
+                        modifier = Modifier.clickable(enabled = true, onClick = {
+                            dismissSearch()
+                            "${Build.BRAND} ${Build.MODEL}".convertToPart()
+                        }),
                         isDarkTheme = true,
                         contentAlignment = Alignment.CenterEnd
                     ) {
@@ -325,50 +414,68 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Test",
+                                text = "New Voucher",
                                 fontFamily = defaultFont,
-                                fontSize = 20.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             VerticalDivider(
                                 modifier = Modifier
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    .offset(x = 60.dp),
+                                    .offset(x = 30.dp),
                                 thickness = 1.dp,
                                 color = Color.Gray
                             )
                             Text(
-                                modifier = Modifier.offset(x = 60.dp),
+                                modifier = Modifier.offset(x = 30.dp),
                                 text = "Redeem",
                                 fontFamily = defaultFont,
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Red
                             )
                         }
                     }
                 }
             }
 
-            // Recommend Result
-            FlowRow(
-                modifier = Modifier.padding(vertical = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                itemVerticalAlignment = Alignment.CenterVertically,
-                maxItemsInEachRow = 2
-            ) {
-                val sellers = Sellers.entries.toTypedArray()
-                repeat(sellers.size) {
-                    val seller = sellers[it]
-                    DrawResultBox(
-                        topicText = seller.sellerName,
-                        sellerGrade = seller.gradeDetails,
-                        image = painterResource(seller.sellerLogo),
-                        onClick = {
-                            drawPopup = true
-                            currentSellersSelected = seller
-                        }
+            Spacer(Modifier.height(16.dp))
+
+            if (filteredSellers.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No third-party merchants matching \"$searchQuery\"",
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
+                        color = Color.Gray
                     )
+                }
+            } else {
+                FlowRow(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                    maxItemsInEachRow = 2
+                ) {
+                    repeat(filteredSellers.size) {
+                        val seller = filteredSellers[it]
+                        DrawResultBox(
+                            topicText = seller.sellerName,
+                            sellerGrade = seller.gradeDetails,
+                            image = painterResource(seller.sellerLogo),
+                            onClick = {
+                                dismissSearch()
+                                drawPopup = true
+                                currentSellersSelected = seller
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -492,7 +599,8 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                                     Icon(
                                         imageVector = Icons.Default.LocationOn,
                                         contentDescription = "Map Pin",
-                                        tint = Color.White
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                     Text(
                                         text = "Open in Google Maps",
@@ -556,19 +664,50 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
 @Composable
 fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
+    val focusManager = LocalFocusManager.current
+
+    var searchQuery by remember { mutableStateOf("") }
     var drawPopup by remember { mutableStateOf(false) }
     var currentProductSelected by remember { mutableStateOf<ProductsCategory?>(null) }
     var currentSellersSelected by remember { mutableStateOf<Sellers?>(null) }
+
+    val filteredSellers = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            Sellers.entries.toList()
+        } else {
+            Sellers.entries.filter { seller ->
+                seller.sellerName.contains(searchQuery, ignoreCase = true) ||
+                        seller.address.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    val dismissSearch = {
+        if (searchQuery.isNotEmpty()) {
+            searchQuery = ""
+        }
+        focusManager.clearFocus()
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color.White)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = dismissSearch
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollableState)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = dismissSearch
+                )
                 .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -592,29 +731,64 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(32.dp)
+                        .height(34.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxSize(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Enter To Search..",
-                            fontSize = defaultFontSize,
-                            fontFamily = defaultFont
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontFamily = defaultFont,
+                                fontSize = defaultFontSize,
+                                color = Color.Black
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                            modifier = Modifier.weight(1f),
+                            decorationBox = { innerTextField ->
+                                Box(contentAlignment = Alignment.CenterStart) {
+                                    if (searchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Search third party...",
+                                            fontSize = defaultFontSize,
+                                            fontFamily = defaultFont,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
                         )
+
+                        if (searchQuery.isNotEmpty()) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { searchQuery = "" }
+                            )
+                        }
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             VerticalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp, horizontal = 6.dp),
-                                thickness = 1.5.dp,
+                                modifier = Modifier
+                                    .height(16.dp)
+                                    .padding(horizontal = 6.dp),
+                                thickness = 1.dp,
                                 color = Color.Gray.copy(alpha = 0.5f)
                             )
                             Text(
+                                modifier = Modifier.clickable { focusManager.clearFocus() },
                                 text = "Search",
                                 fontSize = defaultFontSize,
                                 fontFamily = defaultBoldFont
@@ -693,6 +867,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
+                                        dismissSearch()
                                         if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
                                             drawPopup = true
                                             currentProductSelected = currentProduct
@@ -764,7 +939,10 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                 }
                             }
                             GlassBox(
-                                modifier = Modifier,
+                                modifier = Modifier.clickable(enabled = true, onClick = {
+                                    dismissSearch()
+                                    "${Build.BRAND} ${Build.MODEL}".convertToPart()
+                                }),
                                 isDarkTheme = true,
                                 contentAlignment = Alignment.Center
                             ) {
@@ -818,13 +996,15 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Test",
+                                        text = "New Voucher",
                                         fontFamily = defaultFont,
-                                        fontSize = 14.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     VerticalDivider(
-                                        modifier = Modifier.padding(vertical = 4.dp).offset(x = 100.dp),
+                                        modifier = Modifier
+                                            .padding(vertical = 4.dp)
+                                            .offset(x = 70.dp),
                                         thickness = 1.dp,
                                         color = Color.LightGray
                                     )
@@ -842,27 +1022,43 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 }
             }
 
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-                itemVerticalAlignment = Alignment.CenterVertically,
-                maxItemsInEachRow = 4
-            ) {
-                val sellers = Sellers.entries.toTypedArray()
-                repeat(sellers.size) {
-                    val seller = sellers[it]
-                    DrawResultBox(
-                        topicText = seller.sellerName,
-                        sellerGrade = seller.gradeDetails,
-                        image = painterResource(seller.sellerLogo),
-                        onClick = {
-                            drawPopup = true
-                            currentSellersSelected = seller
-                        }
+            if (filteredSellers.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No third-party merchants matching \"$searchQuery\"",
+                        fontFamily = defaultFont,
+                        fontSize = 13.sp,
+                        color = Color.Gray
                     )
+                }
+            } else {
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                    maxItemsInEachRow = 4
+                ) {
+                    repeat(filteredSellers.size) {
+                        val seller = filteredSellers[it]
+                        DrawResultBox(
+                            topicText = seller.sellerName,
+                            sellerGrade = seller.gradeDetails,
+                            image = painterResource(seller.sellerLogo),
+                            onClick = {
+                                dismissSearch()
+                                drawPopup = true
+                                currentSellersSelected = seller
+                            }
+                        )
+                    }
                 }
             }
         }
