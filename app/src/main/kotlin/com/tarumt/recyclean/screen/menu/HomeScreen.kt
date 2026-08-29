@@ -97,6 +97,7 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
 fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     var searchQuery by remember { mutableStateOf("") }
     var drawPopup by remember { mutableStateOf(false) }
@@ -154,7 +155,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                 Icon(
                     modifier = Modifier.clickable(
                         enabled = true,
-                        onClick = { viewModel.processUserLogout() }
+                        onClick = { viewModel.processUserLogout(context) }
                     ),
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout"
@@ -581,6 +582,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
 fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     var searchQuery by remember { mutableStateOf("") }
     var drawPopup by remember { mutableStateOf(false) }
@@ -639,7 +641,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 Icon(
                     modifier = Modifier.clickable(
                         enabled = true,
-                        onClick = { viewModel.processUserLogout() }
+                        onClick = { viewModel.processUserLogout(context) }
                     ),
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout"

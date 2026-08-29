@@ -3,21 +3,15 @@ package com.tarumt.recyclean.util.data
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-
 @Serializable
 data class UserProfileDto(
-    @SerialName("id")
-    val id: String = "",
-    @SerialName("username")
-    val username: String? = null,
-    @SerialName("security_pin")
-    val securityPin: String? = null,
-    @SerialName("role")
-    val role: String? = "Normal",
-    @SerialName("is_blacklisted")
-    val isBlacklisted: Boolean? = false,
-    @SerialName("blacklist_reason")
-    val blacklistReason: String? = ""
+    val id: String? = null,
+    val email: String? = null,
+    val password: String? = null,
+    @SerialName("security_pin") val securityPin: String? = null,
+    val role: String? = null,
+    @SerialName("is_blacklisted") val isBlacklisted: Boolean? = false,
+    @SerialName("blacklist_reason") val blacklistReason: String? = null
 )
 
 class User(

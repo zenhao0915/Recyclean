@@ -13,7 +13,6 @@ import com.tarumt.recyclean.util.data.Sellers
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserState
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import io.ktor.client.engine.okhttp.OkHttp
@@ -22,7 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 class AppState {
     lateinit var scope: CoroutineScope
 
-    val isDebuggerMode by mutableStateOf(true) // Skip Firebase When Value Is "true"
+    val isDebuggerMode by mutableStateOf(false) // Skip Firebase When Value Is "true"
 
     var currentUser by mutableStateOf<User?>(null)
     var currentUserState by mutableStateOf(UserState.Normal)
@@ -31,24 +30,23 @@ class AppState {
         supabaseKey = "sb_publishable_iPpoy81AmIAedZSDon_Sfg_8kIZq60e"
     ) {
         httpEngine = OkHttp.create()
-        install(Auth)
         install(Postgrest)
         install(Realtime)
     }
 
     val currentMerchantName: String
-    get() {
-        val raw = currentUser?.userName?.trim().orEmpty()
-        if (raw.isBlank()) return ""
+        get() {
+            val raw = currentUser?.userName?.trim().orEmpty()
+            if (raw.isBlank()) return ""
 
-        val cleanRaw = raw.substringBefore("@").replace(" ", "").lowercase()
-        val matchedSeller = Sellers.entries.find { seller ->
-            seller.sellerName.replace(" ", "").lowercase() == cleanRaw ||
-                    seller.name.replace("_", "").lowercase() == cleanRaw
+            val cleanRaw = raw.substringBefore("@").replace(" ", "").lowercase()
+            val matchedSeller = Sellers.entries.find { seller ->
+                seller.sellerName.replace(" ", "").lowercase() == cleanRaw ||
+                        seller.name.replace("_", "").lowercase() == cleanRaw
+            }
+
+            return matchedSeller?.sellerName ?: raw.substringBefore("@")
         }
-
-        return matchedSeller?.sellerName ?: raw.substringBefore("@")
-    }
 
     val navigator = NavigatorState()
     var lastTouchOffset by mutableStateOf(Offset.Zero)

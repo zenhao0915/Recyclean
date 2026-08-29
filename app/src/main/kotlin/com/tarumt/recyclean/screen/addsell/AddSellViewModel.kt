@@ -15,7 +15,6 @@ import com.tarumt.recyclean.common.api_key
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.util.data.UserProfileDto
-import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,14 +53,16 @@ class AddSellViewModel : ViewModel() {
         Return [] if non-electronic.
     """.trimIndent()
 
-    // 🌟 检查当前操作者是否已被黑名单封禁
+    // 🌟 检查当前操作者是否已被黑名单封禁 (SQL: SELECT * FROM users WHERE email = ?)
     private suspend fun checkIsUserBlacklisted(): Boolean {
         if (appState.isDebuggerMode) return false
 
-        val uid = appState.supabase.auth.currentUserOrNull()?.id ?: return false
+        // 🌟 从全局 appState 中获取当前登录用户的 Email
+        val currentEmail = appState.currentUser?.userNameWithEmail ?: return false
+
         return try {
             val profile = appState.supabase.from("users").select {
-                filter { eq("id", uid) }
+                filter { eq("email", currentEmail) }
             }.decodeSingle<UserProfileDto>()
 
             if (profile.isBlacklisted == true) {
@@ -77,6 +78,7 @@ class AddSellViewModel : ViewModel() {
                 false
             }
         } catch (e: Exception) {
+            Log.e("AddSellViewModel", "Error checking blacklist status", e)
             false
         }
     }

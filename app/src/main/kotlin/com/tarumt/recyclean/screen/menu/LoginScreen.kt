@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -210,6 +211,7 @@ fun LoginFormFields(
     password: String,
     onPasswordChange: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val showRegisterPinDialog = rememberSaveable { mutableStateOf(false) }
     val showForgetPasswordDialog = rememberSaveable { mutableStateOf(false) }
 
@@ -339,7 +341,8 @@ fun LoginFormFields(
                     viewModel.processUserLogin(
                         username,
                         password,
-                        userState = appState.currentUserState
+                        userState = appState.currentUserState,
+                        context = context
                     )
                 }),
             shape = CircleShape,

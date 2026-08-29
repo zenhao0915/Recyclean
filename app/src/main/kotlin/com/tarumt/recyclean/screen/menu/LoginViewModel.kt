@@ -1,5 +1,6 @@
 package com.tarumt.recyclean.screen.menu
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,19 +10,16 @@ import androidx.lifecycle.viewModelScope
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.navigation.HomePageDestination
 import com.tarumt.recyclean.notification.NotificationManager
+import com.tarumt.recyclean.common.SessionManager
 import com.tarumt.recyclean.util.data.User
 import com.tarumt.recyclean.util.data.UserProfileDto
 import com.tarumt.recyclean.util.data.UserState
-import io.github.jan.supabase.gotrue.auth
-import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel : ViewModel() {
@@ -30,34 +28,53 @@ class LoginViewModel : ViewModel() {
 
     var loadingMessage by mutableStateOf("Connecting To Database....")
         private set
-    suspend fun checkAutoLogin(onComplete: () -> Unit = {}): Boolean {
+
+    private fun formatUsername(rawName: String): String {
+        val clean = rawName.trim().lowercase().replace(" ", "")
+        return if (clean.endsWith("@recyclean.app")) {
+            clean
+        } else {
+            "$clean@recyclean.app"
+        }
+    }
+
+    // =========================================================================
+    // 🌟 自动登录：读取本地凭据并通过 SQL (SELECT WHERE) 向 Supabase 重新验证
+    // =========================================================================
+    suspend fun checkAutoLogin(context: Context, onComplete: () -> Unit = {}): Boolean {
         if (appState.isDebuggerMode) {
-            onComplete()
+            withContext(Dispatchers.Main) { onComplete() }
             return false
         }
 
         return withContext(Dispatchers.IO) {
             try {
+                val savedCredentials =
+                    SessionManager.getSavedCredentials(context) ?: return@withContext false
+
+                val (savedUsername, savedPassword) = savedCredentials
+
                 val isSuccess = withTimeoutOrNull(8000L.milliseconds) {
-                    appState.supabase.auth.awaitInitialization()
+                    // SQL 等价: SELECT * FROM users WHERE username = ? AND password = ?
+                    val matchedUsers = appState.supabase.from("users")
+                        .select {
+                            filter {
+                                eq("email", savedUsername)
+                                eq("password", savedPassword)
+                            }
+                        }.decodeList<UserProfileDto>()
 
-                    val currentSession = appState.supabase.auth.currentSessionOrNull()
-                    val currentSupabaseUser = appState.supabase.auth.currentUserOrNull()
-
-                    if (currentSession == null || currentSupabaseUser == null) {
+                    if (matchedUsers.isEmpty()) {
+                        // 远程密码已被修改或用户已不存在，清理本地失效 Session
+                        SessionManager.clearSession(context)
                         return@withTimeoutOrNull false
                     }
 
-                    val uid = currentSupabaseUser.id
-                    val email = currentSupabaseUser.email.orEmpty()
+                    val profile = matchedUsers.first()
 
-                    val profile = appState.supabase.from("users")
-                        .select(Columns.list("id", "username", "role", "is_blacklisted", "blacklist_reason")) {
-                            filter { eq("id", uid) }
-                        }.decodeSingle<UserProfileDto>()
-
+                    // 检查黑名单封禁状态
                     if (profile.isBlacklisted == true) {
-                        appState.supabase.auth.signOut()
+                        SessionManager.clearSession(context)
                         appState.currentUser = null
                         val reason = profile.blacklistReason?.ifBlank { "Violation of platform policies" }
                             ?: "Violation of platform policies"
@@ -77,13 +94,13 @@ class LoginViewModel : ViewModel() {
 
                     appState.currentUserState = mappedState
                     appState.currentUser = User(
-                        userNameWithEmail = profile.username ?: email.substringBefore("@"),
+                        userNameWithEmail = savedUsername,
                         currentUserState = mappedState
                     )
 
                     NotificationManager.addToast("Session Restored!", isSuccess = true)
 
-                    // 切回主线程执行页面跳转
+                    // 切回主线程跳转页面
                     withContext(Dispatchers.Main) {
                         appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
                     }
@@ -103,88 +120,62 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun processUserLogin(userName: String, password: String, userState: UserState) {
-        val trimmedUsername = userName.trim()
+    // =========================================================================
+    // 1. 用户登录: 校验通过后调用 SessionManager.saveSession
+    // =========================================================================
+    fun processUserLogin(
+        userName: String,
+        password: String,
+        userState: UserState,
+        context: Context? = null
+    ) {
         val trimmedPassword = password.trim()
+
+        if (userName.isBlank() || trimmedPassword.isBlank()) {
+            NotificationManager.addToast("Please fill in both username and password.", isSuccess = false)
+            return
+        }
+
+        val fullUsername = formatUsername(userName)
 
         if (appState.isDebuggerMode) {
             val dummyUser = User(
-                userNameWithEmail = trimmedUsername.ifBlank { "DebugUser" },
+                userNameWithEmail = fullUsername,
                 currentUserState = userState
             )
             appState.currentUser = dummyUser
             appState.currentUserState = userState
-
-            NotificationManager.addToast(
-                "[Debug Mode] Bypassed authentication!",
-                isSuccess = true
-            )
+            NotificationManager.addToast("[Debug Mode] Bypassed authentication!", isSuccess = true)
             appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
             return
         }
 
-        if (trimmedUsername.isBlank() || trimmedPassword.isBlank()) {
-            NotificationManager.addToast(
-                "Please fill in both username and password.",
-                isSuccess = false
-            )
-            return
-        }
-
-        val trimmedEmail = usernameToEmail(trimmedUsername)
-
         isLoading = true
-        loadingMessage = "Connecting To Database...."
+        loadingMessage = "Verifying Credentials...."
 
         viewModelScope.launch {
             try {
-                appState.supabase.auth.signInWith(Email) {
-                    email = trimmedEmail
-                    this.password = trimmedPassword
-                }
-
-                val currentSupabaseUser = appState.supabase.auth.currentUserOrNull()
-                val uid = currentSupabaseUser?.id
-
-                if (uid != null) {
-                    loadingMessage = "Verifying Account Status...."
-                    fetchUserRoleAndNavigate(uid, trimmedUsername, expectedRole = userState)
-                } else {
-                    isLoading = false
-                    NotificationManager.addToast(
-                        "Session error: User UID missing.",
-                        isSuccess = false
-                    )
-                }
-            } catch (e: Exception) {
-                isLoading = false
-                NotificationManager.addToast(
-                    e.localizedMessage ?: "Login failed.",
-                    isSuccess = false
-                )
-            }
-        }
-    }
-
-    private fun fetchUserRoleAndNavigate(uid: String, username: String, expectedRole: UserState) {
-        viewModelScope.launch {
-            try {
-                val profile = appState.supabase.from("users")
+                val matchedUsers = appState.supabase.from("users")
                     .select {
                         filter {
-                            eq("id", uid)
+                            eq("email", fullUsername)
+                            eq("password", trimmedPassword)
                         }
-                    }.decodeSingle<UserProfileDto>()
+                    }.decodeList<UserProfileDto>()
 
-                // 🌟 2. 正常登录拦截：若已封禁，登出并提示原因
-                if (profile.isBlacklisted == true) {
-                    appState.supabase.auth.signOut()
-                    appState.currentUser = null
+                if (matchedUsers.isEmpty()) {
                     isLoading = false
+                    NotificationManager.addToast("Invalid Username or Password!", isSuccess = false)
+                    return@launch
+                }
 
-                    val reason =
-                        profile.blacklistReason?.ifBlank { "Violation of platform policies" }
-                            ?: "Violation of platform policies"
+                val profile = matchedUsers.first()
+
+                if (profile.isBlacklisted == true) {
+                    isLoading = false
+                    context?.let { SessionManager.clearSession(it) }
+                    val reason = profile.blacklistReason?.ifBlank { "Violation of platform policies" }
+                        ?: "Violation of platform policies"
                     NotificationManager.addToast(
                         "Login Denied: Your account has been blacklisted. Reason: $reason",
                         isSuccess = false,
@@ -200,204 +191,166 @@ class LoginViewModel : ViewModel() {
                     else -> UserState.Normal
                 }
 
-                if (mappedState != expectedRole) {
-                    appState.supabase.auth.signOut()
-                    appState.currentUser = null
+                if (mappedState != userState) {
                     isLoading = false
-
                     NotificationManager.addToast(
-                        "Access Denied: This account is registered as '${mappedState.name}', not '${expectedRole.name}'!",
+                        "Access Denied: This account is registered as '${mappedState.name}', not '${userState.name}'!",
                         isSuccess = false
                     )
                     return@launch
                 }
+
+                // 🌟 保存 Session 到本地
+                context?.let { SessionManager.saveSession(it, fullUsername, trimmedPassword) }
 
                 isLoading = false
                 appState.currentUserState = mappedState
                 appState.currentUser = User(
-                    userNameWithEmail = username,
+                    userNameWithEmail = fullUsername,
                     currentUserState = mappedState
                 )
 
-                NotificationManager.addToast("Welcome back, $username!", isSuccess = true)
+                NotificationManager.addToast("Welcome back, $userName!", isSuccess = true)
                 appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
+
             } catch (e: Exception) {
                 isLoading = false
-                appState.supabase.auth.signOut()
-                NotificationManager.addToast(
-                    "Failed to fetch user profile: ${e.localizedMessage}",
-                    isSuccess = false
-                )
+                Log.e("LoginError", "Login failed", e)
+                NotificationManager.addToast("Login failed: ${e.localizedMessage}", isSuccess = false)
             }
         }
     }
 
-    private fun usernameToEmail(username: String): String {
-        return username.trim().lowercase().replace(" ", "") + "@recyclean.app"
-    }
-
+    // =========================================================================
+    // 2. 用户注册
+    // =========================================================================
     fun processRegisterUser(
         userNameInput: String,
         passwordInput: String,
         securityPinInput: String,
-        userState: UserState = appState.currentUserState
+        userState: UserState = appState.currentUserState,
+        context: Context? = null
     ) {
-        val trimmedUsername = userNameInput.trim()
         val trimmedPassword = passwordInput.trim()
         val trimmedPin = securityPinInput.trim()
 
         if (userState != UserState.Normal) {
-            NotificationManager.addToast(
-                "Registration is restricted to Normal users. Merchants and Admins are pre-registered by system.",
-                isSuccess = false
-            )
+            NotificationManager.addToast("Registration is restricted to Normal users.", isSuccess = false)
             return
         }
 
-        if (trimmedUsername.isBlank() || trimmedPassword.isBlank() || trimmedPin.isBlank()) {
-            NotificationManager.addToast(
-                "Please fill in Username, Password, and Security PIN.",
-                isSuccess = false
-            )
+        if (userNameInput.isBlank() || trimmedPassword.isBlank() || trimmedPin.isBlank()) {
+            NotificationManager.addToast("Please fill in all fields.", isSuccess = false)
             return
         }
 
         if (trimmedPassword.length < 6) {
-            NotificationManager.addToast(
-                "Password must be at least 6 characters.",
-                isSuccess = false
-            )
+            NotificationManager.addToast("Password must be at least 6 characters.", isSuccess = false)
             return
         }
 
-        if (appState.isDebuggerMode) {
-            NotificationManager.addToast(
-                "[Debug] User $userNameInput registered successfully!",
-                isSuccess = true
-            )
-            processUserLogin(trimmedUsername, trimmedPassword, userState)
-            return
-        }
+        val fullUsername = formatUsername(userNameInput)
 
         isLoading = true
-        loadingMessage = "Connecting To Database...."
+        loadingMessage = "Checking Username Availability...."
 
         viewModelScope.launch {
             try {
-                loadingMessage = "Checking Username Availability...."
                 val existingUsers = appState.supabase.from("users")
                     .select {
-                        filter { eq("username", trimmedUsername) }
+                        filter { eq("email", fullUsername) }
                     }.decodeList<UserProfileDto>()
 
                 if (existingUsers.isNotEmpty()) {
                     isLoading = false
-                    NotificationManager.addToast(
-                        "Username '$trimmedUsername' is already taken!",
-                        isSuccess = false
-                    )
+                    NotificationManager.addToast("Username '$fullUsername' is already taken!", isSuccess = false)
                     return@launch
                 }
 
-                loadingMessage = "Creating Account & Syncing Profile...."
-                val virtualEmail = usernameToEmail(trimmedUsername)
-                appState.supabase.auth.signUpWith(Email) {
-                    email = virtualEmail
-                    password = trimmedPassword
-                }
+                loadingMessage = "Creating Account...."
 
-                val newUser = appState.supabase.auth.currentUserOrNull()
+                val newUser = UserProfileDto(
+                    id = UUID.randomUUID().toString(),
+                    email = fullUsername,
+                    password = trimmedPassword,
+                    securityPin = trimmedPin,
+                    role = UserState.Normal.name,
+                    isBlacklisted = false
+                )
 
-                if (newUser != null) {
-                    appState.supabase.from("users").upsert(
-                        UserProfileDto(
-                            id = newUser.id,
-                            username = trimmedUsername,
-                            securityPin = trimmedPin,
-                            role = UserState.Normal.name
-                        )
-                    )
+                appState.supabase.from("users").insert(newUser)
 
-                    isLoading = false
-                    NotificationManager.addToast("Registered successfully!", isSuccess = true)
-                    processUserLogin(trimmedUsername, trimmedPassword, UserState.Normal)
-                }
+                isLoading = false
+                NotificationManager.addToast("Registered successfully!", isSuccess = true)
+                processUserLogin(fullUsername, trimmedPassword, UserState.Normal, context)
+
             } catch (e: Exception) {
                 isLoading = false
-                NotificationManager.addToast(
-                    "Registration failed: ${e.localizedMessage}",
-                    isSuccess = false
-                )
+                Log.e("RegisterError", "Registration failed", e)
+                NotificationManager.addToast("Registration failed: ${e.localizedMessage}", isSuccess = false)
             }
         }
     }
 
+    // =========================================================================
+    // 3. 忘记密码重置
+    // =========================================================================
     fun processForgetPassword(
         usernameInput: String,
         securityPinInput: String,
         newPasswordInput: String
     ) {
-        val trimmedUsername = usernameInput.trim()
         val trimmedPin = securityPinInput.trim()
         val trimmedNewPassword = newPasswordInput.trim()
 
-        if (trimmedUsername.isBlank() || trimmedPin.isBlank() || trimmedNewPassword.isBlank()) {
-            NotificationManager.addToast(
-                "Please enter Username, Security PIN, and New Password.",
-                isSuccess = false
-            )
+        if (usernameInput.isBlank() || trimmedPin.isBlank() || trimmedNewPassword.isBlank()) {
+            NotificationManager.addToast("Please enter Username, Security PIN, and New Password.", isSuccess = false)
             return
         }
 
         if (trimmedNewPassword.length < 6) {
-            NotificationManager.addToast(
-                "New password must be at least 6 characters.",
-                isSuccess = false
-            )
+            NotificationManager.addToast("New password must be at least 6 characters.", isSuccess = false)
             return
         }
 
-        if (appState.isDebuggerMode) {
-            NotificationManager.addToast(
-                "[Debug] Simulated sending password using pin",
-                isSuccess = true
-            )
-            return
-        }
+        val fullUsername = formatUsername(usernameInput)
 
         isLoading = true
-        loadingMessage = "Verifying Security PIN With Database...."
+        loadingMessage = "Verifying Security PIN...."
 
         viewModelScope.launch {
             try {
-                val isSuccess = appState.supabase.postgrest.rpc(
-                    function = "reset_password_with_pin",
-                    parameters = mapOf(
-                        "target_username" to trimmedUsername,
-                        "input_pin" to trimmedPin,
-                        "new_password" to trimmedNewPassword
-                    )
-                ).decodeAs<Boolean>()
+                val matchedUsers = appState.supabase.from("users")
+                    .select {
+                        filter {
+                            eq("email", fullUsername)
+                            eq("security_pin", trimmedPin)
+                        }
+                    }.decodeList<UserProfileDto>()
+
+                if (matchedUsers.isEmpty()) {
+                    isLoading = false
+                    NotificationManager.addToast("Failed: Invalid Username or Security PIN.", isSuccess = false)
+                    return@launch
+                }
+
+                appState.supabase.from("users").update(
+                    {
+                        set("password", trimmedNewPassword)
+                    }
+                ) {
+                    filter {
+                        eq("email", fullUsername)
+                    }
+                }
 
                 isLoading = false
+                NotificationManager.addToast("Password reset successfully! You can log in now.", isSuccess = true)
 
-                if (isSuccess) {
-                    NotificationManager.addToast(
-                        "Password reset successfully! You can log in now.",
-                        isSuccess = true
-                    )
-                } else {
-                    NotificationManager.addToast(
-                        "Failed: Invalid Username or Security PIN.",
-                        isSuccess = false
-                    )
-                }
             } catch (e: Exception) {
                 isLoading = false
-                NotificationManager.addToast(
-                    "Error resetting password: ${e.localizedMessage}",
-                    isSuccess = false
-                )
+                Log.e("ResetPasswordError", "Reset password failed", e)
+                NotificationManager.addToast("Error resetting password: ${e.localizedMessage}", isSuccess = false)
             }
         }
     }

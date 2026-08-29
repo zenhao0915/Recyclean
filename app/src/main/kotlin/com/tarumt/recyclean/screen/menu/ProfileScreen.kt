@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,6 +68,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
 
 @Composable
 fun ProfileScreenPortrait(viewModel: ProfileViewModel) = DrawTemplate {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.padding(bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
@@ -159,7 +161,7 @@ fun ProfileScreenPortrait(viewModel: ProfileViewModel) = DrawTemplate {
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().clickable(enabled = true, onClick = {
-                    viewModel.processUserLogout()
+                    viewModel.processUserLogout(context)
                 }),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
                 verticalAlignment = Alignment.CenterVertically
@@ -181,6 +183,7 @@ fun ProfileScreenPortrait(viewModel: ProfileViewModel) = DrawTemplate {
 
 @Composable
 fun ProfileScreenLandscape(viewModel: ProfileViewModel) = DrawTemplate {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -289,7 +292,7 @@ fun ProfileScreenLandscape(viewModel: ProfileViewModel) = DrawTemplate {
                 ) {
                     Row(
                         modifier = Modifier.clickable(enabled = true, onClick = {
-                            viewModel.processUserLogout()
+                            viewModel.processUserLogout(context)
                         }),
                         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
                         verticalAlignment = Alignment.CenterVertically
