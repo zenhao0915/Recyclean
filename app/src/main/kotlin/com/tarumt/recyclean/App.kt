@@ -1,12 +1,15 @@
 package com.tarumt.recyclean
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,6 +75,10 @@ fun App() {
         }
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val showNav = appState.navigator.current != null && appState.navigator.current !is LoginPageDestination
+
     MaterialTheme {
         if (isCheckingAutoLogin) {
             SplashScreen()
@@ -90,62 +98,41 @@ fun App() {
                         }
                     }
             ) {
-                Scaffold(
-                    containerColor = Color.White,
-                    bottomBar = {
-                        // Navigator
-                        if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) DrawNavigator()
-                    },
-                    floatingActionButton = {}
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier.padding(
-                            if (appState.navigator.current != null && appState.navigator.current !is LoginPageDestination) innerPadding else PaddingValues(
-                                0.dp
-                            )
-                        )
+                if (isLandscape) {
+                    // 🌟 1. 横屏：左侧放 DrawNavigator，右侧为主内容展示区
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White)
                     ) {
-                        AppNavigator(appState.navigator, homeContent = {
-                            LoginScreen()
-                        }, destinationContent = { destination ->
-                            val currentUserState = appState.currentUserState
-
-                            when (destination) {
-                                is LoginPageDestination -> LoginScreen()
-                                is ProfilePageDestination -> ProfileScreen()
-
-                                is VerificationPageDestination -> {
-                                    appState.currentVerificationAppointment?.let { appt ->
-                                        ThirdPartyVerificationScreen(appointment = appt)
-                                    }
-                                }
-
-                                is MeetingPageDestination -> {
-                                    when (currentUserState) {
-                                        UserState.ThirdParty -> ThirdPartyMeetingScreen()
-                                        else -> DefaultMeetingScreen()
-                                    }
-                                }
-
-                                is AddSellPageDestination -> {
-                                    when (currentUserState) {
-                                        UserState.ThirdParty -> ThirdPartyAddSellScreen()
-                                        else -> AddSellScreen()
-                                    }
-                                }
-
-                                is DataPageDestination -> {
-                                    when (currentUserState) {
-                                        UserState.Admin -> AdminDataScreen()
-                                        UserState.ThirdParty -> ThirdPartyDataScreen()
-                                        else -> DefaultDataScreen()
-                                    }
-                                }
-
-                                else -> HomeScreen()
-                            }
-                        })
-                        NotificationManager.CallToast()
+                        if (showNav) {
+                            DrawNavigator()
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        ) {
+                            MainContentNavigator()
+                            NotificationManager.CallToast()
+                        }
+                    }
+                } else {
+                    // 📱 2. 竖屏：保持底部 Scaffold 结构
+                    Scaffold(
+                        containerColor = Color.White,
+                        bottomBar = {
+                            if (showNav) DrawNavigator()
+                        }
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier.padding(
+                                if (showNav) innerPadding else PaddingValues(0.dp)
+                            )
+                        ) {
+                            MainContentNavigator()
+                            NotificationManager.CallToast()
+                        }
                     }
                 }
             }
@@ -154,9 +141,55 @@ fun App() {
 }
 
 @Composable
+fun MainContentNavigator() {
+    AppNavigator(appState.navigator, homeContent = {
+        LoginScreen()
+    }, destinationContent = { destination ->
+        val currentUserState = appState.currentUserState
+
+        when (destination) {
+            is LoginPageDestination -> LoginScreen()
+            is ProfilePageDestination -> ProfileScreen()
+
+            is VerificationPageDestination -> {
+                appState.currentVerificationAppointment?.let { appt ->
+                    ThirdPartyVerificationScreen(appointment = appt)
+                }
+            }
+
+            is MeetingPageDestination -> {
+                when (currentUserState) {
+                    UserState.ThirdParty -> ThirdPartyMeetingScreen()
+                    else -> DefaultMeetingScreen()
+                }
+            }
+
+            is AddSellPageDestination -> {
+                when (currentUserState) {
+                    UserState.ThirdParty -> ThirdPartyAddSellScreen()
+                    else -> AddSellScreen()
+                }
+            }
+
+            is DataPageDestination -> {
+                when (currentUserState) {
+                    UserState.Admin -> AdminDataScreen()
+                    UserState.ThirdParty -> ThirdPartyDataScreen()
+                    else -> DefaultDataScreen()
+                }
+            }
+
+            else -> HomeScreen()
+        }
+    })
+}
+
+@Composable
 fun SplashScreen() {
     Box(
-        modifier = Modifier.fillMaxSize().background(color = Color.White),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White),
         contentAlignment = Alignment.Center
     ) {
         Column(

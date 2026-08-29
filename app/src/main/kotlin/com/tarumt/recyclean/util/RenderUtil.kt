@@ -149,36 +149,242 @@ fun GlassBox(
         Box { content() }
     }
 }
-
-@Preview@SuppressLint("UseOfNonLambdaOffsetOverload")
+@Preview
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun DrawNavigator() {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    val navBottomPadding = if (isLandscape) 20.dp else 36.dp
-    val barHeight = if (isLandscape) 44.dp else 56.dp
-    val pillWidth = if (isLandscape) 52.dp else 68.dp
-    val pillHeight = if (isLandscape) 40.dp else 55.dp
-    val centerIconOffsetY = if (isLandscape) (-16).dp else (-28).dp
-    val centerTextOffsetY = if (isLandscape) (-14).dp else (-26).dp
-    val normalIconSize = if (isLandscape) 20.dp else 24.dp
-    val centerIconSize = if (isLandscape) 28.dp else 36.dp
-    val labelFontSize = if (isLandscape) 10.sp else defaultFontSize
+    if (isLandscape) {
+        LandscapeLeftNavigator()
+    } else {
+        PortraitBottomNavigator()
+    }
+}
 
+// =============================================================================
+// 🔄 1. Landscape 模式：左侧垂直导航胶囊导轨
+// =============================================================================
+@Composable
+private fun LandscapeLeftNavigator() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(start = 12.dp, end = 6.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .width(68.dp)
+                .height(310.dp)
+                .background(color = Color.White.copy(alpha = 0.85f), shape = RoundedCornerShape(36.dp))
+                .border(
+                    width = 0.5.dp,
+                    color = Color.Gray.copy(0.4f),
+                    shape = RoundedCornerShape(36.dp)
+                )
+        ) {
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxHeight(),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                val density = LocalDensity.current
+                val tabCount = Navigations.entries.size
+                val selectedIndex =
+                    Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
+                val tabHeight = maxHeight / tabCount
+
+                var isDragging by remember { mutableStateOf(false) }
+                var dragOffsetYPx by remember { mutableFloatStateOf(0f) }
+
+                val tabHeightPx = density.run { tabHeight.toPx() }
+                val maxOffsetPx = tabHeightPx * (tabCount - 1)
+                val snappedOffsetDp = if (selectedIndex >= 0) tabHeight * selectedIndex else 0.dp
+                val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
+
+                val targetOffsetDp = if (isDragging) {
+                    density.run { dragOffsetYPx.toDp() }
+                } else {
+                    snappedOffsetDp
+                }
+
+                val animatedPillOffset by animateDpAsState(
+                    targetValue = targetOffsetDp,
+                    animationSpec = if (isDragging) snap() else spring(
+                        dampingRatio = 0.6f,
+                        stiffness = 800f
+                    ),
+                    label = "VerticalPillOffset"
+                )
+
+                val currentEstimatedIndex = if (isDragging) {
+                    (dragOffsetYPx / tabHeightPx).roundToInt().coerceIn(0, tabCount - 1)
+                } else {
+                    selectedIndex
+                }
+                val isOverCenter = currentEstimatedIndex == tabCount / 2
+
+                val pillAlpha by animateFloatAsState(
+                    targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
+                    animationSpec = spring(dampingRatio = 0.65f),
+                    label = "PillAlpha"
+                )
+
+                val modifierWithGestures = Modifier
+                    .fillMaxHeight()
+                    .pointerInput(tabCount, selectedIndex, snappedOffsetPx) {
+                        val swipeThresholdPx = 10f
+                        awaitPointerEventScope {
+                            while (true) {
+                                val down = awaitPointerEvent(PointerEventPass.Main)
+                                val downChange =
+                                    down.changes.firstOrNull()?.takeIf { it.pressed } ?: continue
+
+                                val startY = downChange.position.y
+                                val pointerId = downChange.id
+                                var hasMoved = false
+
+                                dragOffsetYPx = snappedOffsetPx
+
+                                while (true) {
+                                    val nextEvent = awaitPointerEvent(PointerEventPass.Main)
+                                    val change =
+                                        nextEvent.changes.firstOrNull { it.id == pointerId }
+                                    if (change == null || change.isConsumed) {
+                                        isDragging = false
+                                        break
+                                    }
+
+                                    if (change.pressed) {
+                                        val deltaY = change.position.y - startY
+                                        if (!hasMoved && abs(deltaY) > swipeThresholdPx) {
+                                            isDragging = true
+                                            hasMoved = true
+                                        }
+
+                                        if (isDragging) {
+                                            dragOffsetYPx = (snappedOffsetPx + deltaY).coerceIn(
+                                                0f, maxOffsetPx
+                                            )
+                                            change.consume()
+                                        }
+                                    } else {
+                                        if (isDragging) {
+                                            isDragging = false
+                                            val targetIndex =
+                                                (dragOffsetYPx / tabHeightPx).roundToInt()
+                                                    .coerceIn(0, tabCount - 1)
+                                            val targetNav = Navigations.entries[targetIndex]
+
+                                            if (targetNav.navDestination != appState.navigator.current) {
+                                                appState.navigator.navigateTo(
+                                                    targetNav.navDestination, Offset.Zero
+                                                )
+                                            }
+                                        } else {
+                                            val clickIndex = (startY / tabHeightPx).toInt()
+                                                .coerceIn(0, tabCount - 1)
+                                            val targetNav = Navigations.entries[clickIndex]
+
+                                            if (targetNav.navDestination != appState.navigator.current) {
+                                                appState.navigator.navigateTo(
+                                                    targetNav.navDestination, Offset.Zero
+                                                )
+                                            }
+                                        }
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                Box(
+                    modifier = modifierWithGestures,
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    // 纵向滑动高亮胶囊
+                    Box(
+                        modifier = Modifier
+                            .offset(y = animatedPillOffset)
+                            .width(58.dp)
+                            .height(tabHeight)
+                            .graphicsLayer { alpha = pillAlpha },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(56.dp)
+                                .height(46.dp)
+                                .background(
+                                    color = Color(0xFFFF3B30).copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                        )
+                    }
+
+                    // 垂直 5 个导航按钮
+                    Column(
+                        modifier = Modifier.fillMaxHeight(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        repeat(tabCount) { i ->
+                            val isCenterElement = i == tabCount / 2
+                            val currentNav = Navigations.entries[i]
+                            val isSelected = currentNav.navDestination == appState.navigator.current
+                            val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .width(68.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    modifier = Modifier
+                                        .offset(x = if (isCenterElement) 0.dp else 0.dp)
+                                        .size(if (isCenterElement) 28.dp else 22.dp),
+                                    imageVector = currentNav.icons,
+                                    contentDescription = currentNav.name,
+                                    tint = itemColor
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = currentNav.name,
+                                    fontFamily = defaultFont,
+                                    fontSize = 10.sp,
+                                    color = itemColor,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// =============================================================================
+// 📱 2. Portrait 模式：底部横向导航胶囊（原版结构）
+// =============================================================================
+@Composable
+private fun PortraitBottomNavigator() {
     Box(
         contentAlignment = Alignment.BottomCenter,
         modifier = Modifier
             .background(color = Color.Transparent)
-            .padding(bottom = navBottomPadding)
+            .padding(bottom = 36.dp)
             .fillMaxWidth()
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .then(
-                    if (isLandscape) Modifier.width(350.dp) else Modifier.fillMaxWidth()
-                )
+                .fillMaxWidth()
                 .padding(horizontal = 4.dp)
                 .background(color = Color.Transparent, shape = CircleShape)
                 .border(
@@ -309,14 +515,14 @@ fun DrawNavigator() {
                         modifier = Modifier
                             .offset(x = animatedPillOffset)
                             .width(tabWidth)
-                            .height(barHeight)
+                            .height(56.dp)
                             .graphicsLayer { alpha = pillAlpha },
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
-                                .width(pillWidth)
-                                .height(pillHeight)
+                                .width(68.dp)
+                                .height(55.dp)
                                 .background(
                                     color = Color(0xFFFF3B30).copy(alpha = 0.15f),
                                     shape = CircleShape
@@ -327,7 +533,7 @@ fun DrawNavigator() {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = if (isLandscape) 4.dp else 10.dp),
+                            .padding(vertical = 10.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -344,17 +550,17 @@ fun DrawNavigator() {
                             ) {
                                 Icon(
                                     modifier = Modifier
-                                        .offset(y = if (isCenterElement) centerIconOffsetY else 0.dp)
-                                        .size(if (isCenterElement) centerIconSize else normalIconSize),
+                                        .offset(y = if (isCenterElement) (-28).dp else 0.dp)
+                                        .size(if (isCenterElement) 36.dp else 24.dp),
                                     imageVector = currentNav.icons,
                                     contentDescription = currentNav.name,
                                     tint = itemColor
                                 )
                                 Text(
-                                    modifier = Modifier.offset(y = if (isCenterElement) centerTextOffsetY else 0.dp),
+                                    modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
                                     text = currentNav.name,
                                     fontFamily = defaultFont,
-                                    fontSize = labelFontSize,
+                                    fontSize = defaultFontSize,
                                     color = itemColor,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
