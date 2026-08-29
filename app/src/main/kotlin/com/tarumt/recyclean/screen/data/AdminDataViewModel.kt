@@ -64,7 +64,6 @@ class AdminDataViewModel : ViewModel() {
 
     val userList = mutableStateListOf<UserData>()
 
-    // 🌟 仅保存当前登录账号自己的已完成交易记录
     val completedTransactions = mutableStateListOf<Appointment>()
 
     private val currentUsername: String
@@ -90,6 +89,10 @@ class AdminDataViewModel : ViewModel() {
 
     @SuppressLint("DefaultLocale")
     fun fetchUsers() {
+        // 🌟 重新获取/进入页面时重置搜索关键字与选中状态
+        searchQuery = ""
+        selectedUserId = null
+
         if (appState.isDebuggerMode) {
             loadMockData()
             return

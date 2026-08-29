@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Payments
@@ -75,7 +76,6 @@ import com.tarumt.recyclean.common.bronzeColor
 import com.tarumt.recyclean.common.creamColor
 import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
-import com.tarumt.recyclean.common.defaultFontSize
 import com.tarumt.recyclean.common.goldColor
 import com.tarumt.recyclean.common.lightBlueColor
 import com.tarumt.recyclean.common.orangeCreamColor
@@ -91,7 +91,10 @@ fun AdminDataScreen(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    // 🌟 进入页面时清空搜索内容并重新抓取数据
     LaunchedEffect(Unit) {
+        viewModel.searchQuery = ""
+        viewModel.selectedUserId = null
         viewModel.fetchUsers()
     }
 
@@ -323,201 +326,7 @@ private fun AdminDashboardLandscape(
 }
 
 /**
- * 🌟 可展开/收起的交易明细卡片
- */
-@SuppressLint("DefaultLocale")
-@Composable
-fun TransactionCard(appointment: Appointment) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val arrowRotation by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        label = "ArrowRotation"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) {
-                isExpanded = !isExpanded
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.6f))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // 头部：设备名称 + COMPLETED 标签 + 展开箭头
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = appointment.deviceName.ifBlank { "Unknown Device" },
-                    fontFamily = defaultBoldFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = Color.Black
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFFE8F5E9),
-                                shape = RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Completed",
-                                tint = Color(0xFF2E7D32),
-                                modifier = Modifier.size(11.dp)
-                            )
-                            Spacer(modifier = Modifier.width(3.dp))
-                            Text(
-                                text = "COMPLETED",
-                                fontSize = 9.sp,
-                                color = Color(0xFF2E7D32),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
-                        tint = Color.Gray,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .rotate(arrowRotation)
-                    )
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Business,
-                    contentDescription = "Seller",
-                    modifier = Modifier.size(13.dp),
-                    tint = Color.Gray
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Sold to: ${appointment.targetSeller.ifBlank { "Merchant" }}",
-                    fontFamily = defaultFont,
-                    fontSize = 11.sp,
-                    color = Color.DarkGray
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Date",
-                    modifier = Modifier.size(13.dp),
-                    tint = Color.Gray
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Date: ${appointment.scheduledDate}",
-                    fontFamily = defaultFont,
-                    fontSize = 11.sp,
-                    color = Color.Gray
-                )
-            }
-
-            // 🌟 核心：仅在展开时显示的零件明细部分
-            AnimatedVisibility(visible = isExpanded) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
-
-                    Text(
-                        text = "Sold Parts Breakdown:",
-                        fontFamily = defaultFont,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Gray
-                    )
-
-                    appointment.selectedParts.forEach { part ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "• ${part.name}",
-                                fontFamily = defaultFont,
-                                fontSize = 11.sp,
-                                color = Color.DarkGray,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = String.format("RM %.2f", part.estimatedPrice),
-                                fontFamily = defaultFont,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
-
-            // 底部：实收总额
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Payments,
-                        contentDescription = "Paid",
-                        tint = orangeCreamColor,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Payout Received",
-                        fontFamily = defaultFont,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    )
-                }
-
-                Text(
-                    text = String.format("RM %.2f", appointment.estimatedValue),
-                    fontFamily = defaultBoldFont,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 15.sp,
-                    color = orangeCreamColor
-                )
-            }
-        }
-    }
-}
-
-/**
- * 🌟 用户搜索框与列表公共组件
+ * 🌟 用户搜索框与列表公共组件 (带一键清空按钮)
  */
 @Composable
 private fun UserSearchAndListContent(viewModel: AdminDataViewModel) {
@@ -525,6 +334,7 @@ private fun UserSearchAndListContent(viewModel: AdminDataViewModel) {
         OutlinedTextField(
             value = viewModel.searchQuery,
             onValueChange = { viewModel.searchQuery = it },
+            singleLine = true,
             placeholder = {
                 Text(
                     text = "Search user by name or ID...",
@@ -540,6 +350,18 @@ private fun UserSearchAndListContent(viewModel: AdminDataViewModel) {
                     tint = skyBlueColor,
                     modifier = Modifier.size(20.dp)
                 )
+            },
+            trailingIcon = {
+                if (viewModel.searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.searchQuery = "" }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear Search",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             },
             shape = RoundedCornerShape(50.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -1077,6 +899,198 @@ fun UserPage(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+
+@SuppressLint("DefaultLocale")
+@Composable
+fun TransactionCard(appointment: Appointment) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val arrowRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "ArrowRotation"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                isExpanded = !isExpanded
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.6f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            // 头部：设备名称 + COMPLETED 标签 + 展开箭头
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = appointment.deviceName.ifBlank { "Unknown Device" },
+                    fontFamily = defaultBoldFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFE8F5E9),
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Completed",
+                                tint = Color(0xFF2E7D32),
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "COMPLETED",
+                                fontSize = 9.sp,
+                                color = Color(0xFF2E7D32),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = Color.Gray,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(arrowRotation)
+                    )
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Business,
+                    contentDescription = "Seller",
+                    modifier = Modifier.size(13.dp),
+                    tint = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Sold to: ${appointment.targetSeller.ifBlank { "Merchant" }}",
+                    fontFamily = defaultFont,
+                    fontSize = 11.sp,
+                    color = Color.DarkGray
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Date",
+                    modifier = Modifier.size(13.dp),
+                    tint = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Date: ${appointment.scheduledDate}",
+                    fontFamily = defaultFont,
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+            }
+
+            // 🌟 核心：仅在展开时显示的零件明细部分
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+
+                    Text(
+                        text = "Sold Parts Breakdown:",
+                        fontFamily = defaultFont,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray
+                    )
+
+                    appointment.selectedParts.forEach { part ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "• ${part.name}",
+                                fontFamily = defaultFont,
+                                fontSize = 11.sp,
+                                color = Color.DarkGray,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = String.format("RM %.2f", part.estimatedPrice),
+                                fontFamily = defaultFont,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+
+            // 底部：实收总额
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Payments,
+                        contentDescription = "Paid",
+                        tint = orangeCreamColor,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Payout Received",
+                        fontFamily = defaultFont,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.DarkGray
+                    )
+                }
+
+                Text(
+                    text = String.format("RM %.2f", appointment.estimatedValue),
+                    fontFamily = defaultBoldFont,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 15.sp,
+                    color = orangeCreamColor
+                )
             }
         }
     }
