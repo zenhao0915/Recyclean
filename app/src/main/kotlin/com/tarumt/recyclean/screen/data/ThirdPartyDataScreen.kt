@@ -146,6 +146,7 @@ fun ThirdPartyDataScreen(
 @SuppressLint("DefaultLocale")
 @Composable
 fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
+    val displayPoints = points.takeLast(6)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -182,7 +183,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 }
 
                 Text(
-                    text = "${points.size} Orders",
+                    text = "${displayPoints.size} Orders",
                     fontFamily = defaultFont,
                     fontSize = 8.sp,
                     color = Color.Gray,
@@ -190,7 +191,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 )
             }
 
-            val maxSpend = (points.maxOfOrNull { it.totalSpend } ?: 1.0).coerceAtLeast(100.0)
+            val maxSpend = (displayPoints.maxOfOrNull { it.totalSpend } ?: 1.0).coerceAtLeast(100.0)
 
             Box(
                 modifier = Modifier
@@ -201,7 +202,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val width = size.width
                     val height = size.height
-                    val spacing = if (points.size > 1) width / (points.size - 1) else width
+                    val spacing = if (displayPoints.size > 1) width / (displayPoints.size - 1) else width
 
                     val gridSteps = 3
                     for (i in 0..gridSteps) {
@@ -214,7 +215,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         )
                     }
 
-                    if (points.size == 1) {
+                    if (displayPoints.size == 1) {
                         val pointY =
                             height - (points[0].totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
                         drawCircle(
@@ -225,7 +226,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                         return@Canvas
                     }
 
-                    val coordinates = points.mapIndexed { index, item ->
+                    val coordinates = displayPoints.mapIndexed { index, item ->
                         val x = index * spacing
                         val y =
                             height - (item.totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
@@ -286,7 +287,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                points.forEach { point ->
+                displayPoints.forEach { point ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = point.dateLabel,
@@ -309,9 +310,6 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
     }
 }
 
-/**
- * 🌟 商家采购统计看板卡片
- */
 @SuppressLint("DefaultLocale")
 @Composable
 fun MerchantProcurementCard(

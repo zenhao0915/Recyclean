@@ -1,6 +1,7 @@
 package com.tarumt.recyclean.util
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -52,6 +53,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.defaultBoldFont
@@ -147,67 +150,89 @@ fun GlassBox(
     }
 }
 
-@Preview
-@SuppressLint("UseOfNonLambdaOffsetOverload")
+@Preview@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
-fun DrawNavigator() = Box(
-    contentAlignment = Alignment.BottomCenter,
-    modifier = Modifier
-        .background(color = Color.Transparent)
-        .padding(bottom = 36.dp)
-) {
+fun DrawNavigator() {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val navBottomPadding = if (isLandscape) 20.dp else 36.dp
+    val barHeight = if (isLandscape) 44.dp else 56.dp
+    val pillWidth = if (isLandscape) 52.dp else 68.dp
+    val pillHeight = if (isLandscape) 40.dp else 55.dp
+    val centerIconOffsetY = if (isLandscape) (-16).dp else (-28).dp
+    val centerTextOffsetY = if (isLandscape) (-14).dp else (-26).dp
+    val normalIconSize = if (isLandscape) 20.dp else 24.dp
+    val centerIconSize = if (isLandscape) 28.dp else 36.dp
+    val labelFontSize = if (isLandscape) 10.sp else defaultFontSize
+
     Box(
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.BottomCenter,
         modifier = Modifier
-            .padding(4.dp)
-            .background(color = Color.Transparent, shape = CircleShape)
-            .border(
-                width = 0.5.dp, color = Color.Gray.copy(0.4f), shape = CircleShape
-            )
+            .background(color = Color.Transparent)
+            .padding(bottom = navBottomPadding)
+            .fillMaxWidth()
     ) {
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .then(
+                    if (isLandscape) Modifier.width(350.dp) else Modifier.fillMaxWidth()
+                )
+                .padding(horizontal = 4.dp)
+                .background(color = Color.Transparent, shape = CircleShape)
+                .border(
+                    width = 0.5.dp,
+                    color = Color.Gray.copy(0.4f),
+                    shape = CircleShape
+                )
         ) {
-            val density = LocalDensity.current
-            val tabCount = Navigations.entries.size
-            val selectedIndex =
-                Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
-            val tabWidth = maxWidth / tabCount
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                val density = LocalDensity.current
+                val tabCount = Navigations.entries.size
+                val selectedIndex =
+                    Navigations.entries.indexOfFirst { it.navDestination == appState.navigator.current }
+                val tabWidth = maxWidth / tabCount
 
-            var isDragging by remember { mutableStateOf(false) }
-            var dragOffsetPx by remember { mutableFloatStateOf(0f) }
+                var isDragging by remember { mutableStateOf(false) }
+                var dragOffsetPx by remember { mutableFloatStateOf(0f) }
 
-            val tabWidthPx = density.run { tabWidth.toPx() }
-            val maxOffsetPx = tabWidthPx * (tabCount - 1)
-            val snappedOffsetDp = if (selectedIndex >= 0) tabWidth * selectedIndex else 0.dp
-            val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
+                val tabWidthPx = density.run { tabWidth.toPx() }
+                val maxOffsetPx = tabWidthPx * (tabCount - 1)
+                val snappedOffsetDp = if (selectedIndex >= 0) tabWidth * selectedIndex else 0.dp
+                val snappedOffsetPx = density.run { snappedOffsetDp.toPx() }
 
-            val targetOffsetDp = if (isDragging) {
-                density.run { dragOffsetPx.toDp() }
-            } else {
-                snappedOffsetDp
-            }
-            val animatedPillOffset by animateDpAsState(
-                targetValue = targetOffsetDp, animationSpec = if (isDragging) snap() else spring(
-                    dampingRatio = 0.6f, stiffness = 800f
-                ), label = "SlidingPillOffset"
-            )
+                val targetOffsetDp = if (isDragging) {
+                    density.run { dragOffsetPx.toDp() }
+                } else {
+                    snappedOffsetDp
+                }
+                val animatedPillOffset by animateDpAsState(
+                    targetValue = targetOffsetDp,
+                    animationSpec = if (isDragging) snap() else spring(
+                        dampingRatio = 0.6f,
+                        stiffness = 800f
+                    ),
+                    label = "SlidingPillOffset"
+                )
 
-            val currentEstimatedIndex = if (isDragging) {
-                (dragOffsetPx / tabWidthPx).roundToInt().coerceIn(0, tabCount - 1)
-            } else {
-                selectedIndex
-            }
-            val isOverCenter = currentEstimatedIndex == tabCount / 2
+                val currentEstimatedIndex = if (isDragging) {
+                    (dragOffsetPx / tabWidthPx).roundToInt().coerceIn(0, tabCount - 1)
+                } else {
+                    selectedIndex
+                }
+                val isOverCenter = currentEstimatedIndex == tabCount / 2
 
-            val pillAlpha by animateFloatAsState(
-                targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
-                animationSpec = spring(dampingRatio = 0.65f),
-                label = "PillAlpha"
-            )
+                val pillAlpha by animateFloatAsState(
+                    targetValue = if (isOverCenter || selectedIndex == -1) 0f else 1f,
+                    animationSpec = spring(dampingRatio = 0.65f),
+                    label = "PillAlpha"
+                )
 
-            val modifierWithGestures =
-                Modifier
+                val modifierWithGestures = Modifier
                     .fillMaxWidth()
                     .pointerInput(tabCount, selectedIndex, snappedOffsetPx) {
                         val swipeThresholdPx = 10f
@@ -276,60 +301,64 @@ fun DrawNavigator() = Box(
                         }
                     }
 
-            Box(
-                modifier = modifierWithGestures, contentAlignment = Alignment.CenterStart
-            ) {
                 Box(
-                    modifier = Modifier
-                        .offset(x = animatedPillOffset)
-                        .width(tabWidth)
-                        .height(56.dp)
-                        .graphicsLayer { alpha = pillAlpha }, contentAlignment = Alignment.Center
+                    modifier = modifierWithGestures,
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(68.dp)
-                            .height(55.dp)
-                            .background(
-                                color = Color(0xFFFF3B30).copy(alpha = 0.15f), shape = CircleShape
-                            )
-                    )
-                }
+                            .offset(x = animatedPillOffset)
+                            .width(tabWidth)
+                            .height(barHeight)
+                            .graphicsLayer { alpha = pillAlpha },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(pillWidth)
+                                .height(pillHeight)
+                                .background(
+                                    color = Color(0xFFFF3B30).copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                        )
+                    }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(tabCount) { i ->
-                        val isCenterElement = i == tabCount / 2
-                        val currentNav = Navigations.entries[i]
-                        val isSelected = currentNav.navDestination == appState.navigator.current
-                        val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = if (isLandscape) 4.dp else 10.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(tabCount) { i ->
+                            val isCenterElement = i == tabCount / 2
+                            val currentNav = Navigations.entries[i]
+                            val isSelected = currentNav.navDestination == appState.navigator.current
+                            val itemColor = if (isSelected) Color(0xFFFF3B30) else Color.Black
 
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .offset(y = if (isCenterElement) (-28).dp else 0.dp)
-                                    .size(if (isCenterElement) 36.dp else 24.dp),
-                                imageVector = currentNav.icons,
-                                contentDescription = currentNav.name,
-                                tint = itemColor
-                            )
-                            Text(
-                                modifier = Modifier.offset(y = if (isCenterElement) (-26).dp else 0.dp),
-                                text = currentNav.name,
-                                fontFamily = defaultFont,
-                                fontSize = defaultFontSize,
-                                color = itemColor,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    modifier = Modifier
+                                        .offset(y = if (isCenterElement) centerIconOffsetY else 0.dp)
+                                        .size(if (isCenterElement) centerIconSize else normalIconSize),
+                                    imageVector = currentNav.icons,
+                                    contentDescription = currentNav.name,
+                                    tint = itemColor
+                                )
+                                Text(
+                                    modifier = Modifier.offset(y = if (isCenterElement) centerTextOffsetY else 0.dp),
+                                    text = currentNav.name,
+                                    fontFamily = defaultFont,
+                                    fontSize = labelFontSize,
+                                    color = itemColor,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
                 }

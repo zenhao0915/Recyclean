@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -160,7 +159,7 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
 
                 Box(
                     modifier = Modifier
-                        .width(260.dp)
+                        .width(300.dp)
                         .height(34.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
@@ -223,36 +222,6 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                             text = "Search",
                             fontSize = defaultFontSize,
                             fontFamily = defaultBoldFont
-                        )
-                    }
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
-                            .padding(2.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "ChatButton",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .border(0.5.dp, Color.Black, shape = RoundedCornerShape(4.dp))
-                            .padding(2.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Wallet,
-                            contentDescription = "Wallet",
-                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -376,65 +345,6 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
                         contentAlignment = Alignment.CenterEnd
                     ) {
                         Text(modifier = Modifier.padding(4.dp), text = "Quote?", fontSize = 18.sp)
-                    }
-                }
-            }
-
-            // Vouchers
-            Spacer(Modifier.height(16.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(60.dp)
-                    .border(0.5.dp, Color.Red, RoundedCornerShape(12.dp))
-                    .background(Color.Red.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                        text = "\u1D3f\u1D396767",
-                        color = Color.White,
-                        fontFamily = defaultBoldFont,
-                        fontSize = 22.sp,
-                    )
-                    Box(
-                        contentAlignment = Alignment.CenterStart,
-                        modifier = Modifier
-                            .width(210.dp)
-                            .height(40.dp)
-                            .background(Color.White, RoundedCornerShape(8.dp))
-                            .offset(x = 15.dp)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "New Voucher",
-                                fontFamily = defaultFont,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            VerticalDivider(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    .offset(x = 30.dp),
-                                thickness = 1.dp,
-                                color = Color.Gray
-                            )
-                            Text(
-                                modifier = Modifier.offset(x = 30.dp),
-                                text = "Redeem",
-                                fontFamily = defaultFont,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.Red
-                            )
-                        }
                     }
                 }
             }
@@ -941,7 +851,9 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             GlassBox(
                                 modifier = Modifier.clickable(enabled = true, onClick = {
                                     dismissSearch()
-                                    "${Build.BRAND} ${Build.MODEL}".convertToPart()
+                                    if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
+                                        "${Build.BRAND} ${Build.MODEL}".convertToPart()
+                                    }
                                 }),
                                 isDarkTheme = true,
                                 contentAlignment = Alignment.Center
@@ -955,67 +867,6 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                            }
-                        }
-                    }
-                }
-
-                Box(modifier = Modifier.weight(1f)) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                            .border(0.5.dp, Color.Red, RoundedCornerShape(12.dp))
-                            .background(Color.Red.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "\u1D3f\u1D396767",
-                                color = Color.White,
-                                fontFamily = defaultBoldFont,
-                                fontSize = 18.sp
-                            )
-                            Box(
-                                contentAlignment = Alignment.CenterStart,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(38.dp)
-                                    .padding(start = 12.dp)
-                                    .background(Color.White, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "New Voucher",
-                                        fontFamily = defaultFont,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    VerticalDivider(
-                                        modifier = Modifier
-                                            .padding(vertical = 4.dp)
-                                            .offset(x = 70.dp),
-                                        thickness = 1.dp,
-                                        color = Color.LightGray
-                                    )
-                                    Text(
-                                        text = "Redeem",
-                                        fontFamily = defaultFont,
-                                        fontSize = 14.sp,
-                                        color = Color.Red,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
                             }
                         }
                     }
@@ -1041,7 +892,10 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                     modifier = Modifier
                         .fillMaxWidth(0.95f)
                         .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        12.dp,
+                        Alignment.CenterHorizontally
+                    ),
                     verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
                     itemVerticalAlignment = Alignment.CenterVertically,
                     maxItemsInEachRow = 4

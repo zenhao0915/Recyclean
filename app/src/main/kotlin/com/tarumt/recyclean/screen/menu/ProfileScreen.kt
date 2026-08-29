@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.R
 import com.tarumt.recyclean.common.appState
 import com.tarumt.recyclean.common.creamColor
@@ -51,22 +54,19 @@ import com.tarumt.recyclean.util.data.UserTier
 
 @Composable
 @Preview
-fun ProfileScreen() {
+fun ProfileScreen(viewModel: ProfileViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     if (isLandscape) {
-        ProfileScreenLandscape()
+        ProfileScreenLandscape(viewModel)
     } else {
-        ProfileScreenPortrait()
+        ProfileScreenPortrait(viewModel)
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait View
-// =============================================================================
 @Composable
-fun ProfileScreenPortrait() = DrawTemplate {
+fun ProfileScreenPortrait(viewModel: ProfileViewModel) = DrawTemplate {
     Row(
         modifier = Modifier.padding(bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
@@ -158,31 +158,18 @@ fun ProfileScreenPortrait() = DrawTemplate {
             horizontalAlignment = Alignment.Start
         ) {
             Row(
+                modifier = Modifier.fillMaxWidth().clickable(enabled = true, onClick = {
+                    viewModel.processUserLogout()
+                }),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Chat,
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = null
                 )
                 Text(
-                    "Chat",
-                    fontFamily = defaultBoldFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = defaultFontSize
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null
-                )
-                Text(
-                    "Settings",
+                    "Logout",
                     fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = defaultFontSize
@@ -193,7 +180,7 @@ fun ProfileScreenPortrait() = DrawTemplate {
 }
 
 @Composable
-fun ProfileScreenLandscape() = DrawTemplate {
+fun ProfileScreenLandscape(viewModel: ProfileViewModel) = DrawTemplate {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -287,7 +274,6 @@ fun ProfileScreenLandscape() = DrawTemplate {
                 }
             }
 
-            // 右侧：Chat & Settings 菜单列表
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -302,15 +288,18 @@ fun ProfileScreenLandscape() = DrawTemplate {
                     horizontalAlignment = Alignment.Start
                 ) {
                     Row(
+                        modifier = Modifier.clickable(enabled = true, onClick = {
+                            viewModel.processUserLogout()
+                        }),
                         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "Chat"
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Logout"
                         )
                         Text(
-                            "Chat",
+                            "Logout",
                             fontFamily = defaultBoldFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = defaultFontSize
