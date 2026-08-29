@@ -90,6 +90,9 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     }
 }
 
+// =============================================================================
+// 📱 1. Portrait View
+// =============================================================================
 @Composable
 fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
@@ -571,6 +574,9 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     }
 }
 
+// =============================================================================
+// 🔄 2. Landscape View (适配左侧垂直 Navigator)
+// =============================================================================
 @Composable
 fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
@@ -618,15 +624,16 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                     indication = null,
                     onClick = dismissSearch
                 )
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // 🌟 顶部栏：紧凑美观的横向搜索框（适配右侧内容区宽度）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, start = 16.dp, end = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -640,11 +647,12 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
 
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth(0.85f)
                         .height(34.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
                         modifier = Modifier.fillMaxSize(),
@@ -706,43 +714,13 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                         }
                     }
                 }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .border(0.5.dp, Color.Black, shape = RoundedCornerShape(6.dp))
-                            .padding(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Chat,
-                            contentDescription = "ChatButton",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .border(0.5.dp, Color.Black, shape = RoundedCornerShape(6.dp))
-                            .padding(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Wallet,
-                            contentDescription = "Wallet",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
             }
 
             Box(
                 modifier = Modifier
                     .background(color = creamColor, shape = RoundedCornerShape(8.dp))
                     .border(0.5.dp, color = creamColor, shape = RoundedCornerShape(8.dp))
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "Products Category",
@@ -751,19 +729,20 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 )
             }
 
+            // Goods Category
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxWidth(0.95f)
+                    .fillMaxWidth(0.96f)
                     .border(1.dp, vanillaColor, RoundedCornerShape(12.dp))
-                    .padding(12.dp)
+                    .padding(10.dp)
             ) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(
-                        32.dp,
+                        24.dp,
                         Alignment.CenterHorizontally
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                     itemVerticalAlignment = Alignment.CenterVertically,
                     maxItemsInEachRow = 8
                 ) {
@@ -772,7 +751,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                         val currentProduct = goodsList.elementAt(it)
                         Column(
                             modifier = Modifier
-                                .width(64.dp)
+                                .width(60.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -793,7 +772,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             )
                             Text(
                                 text = currentProduct.name,
-                                fontSize = defaultFontSize,
+                                fontSize = 11.sp,
                                 fontFamily = defaultFont,
                                 maxLines = 1
                             )
@@ -802,82 +781,76 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(0.95f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // My Device
+            GlassBox(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth(0.96f)
+                    .height(54.dp)
+                    .border(1.dp, color = vanillaColor, CircleShape)
+                    .background(color = Color.Transparent, CircleShape),
+                borderWidth = 1.dp
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    GlassBox(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                            .border(1.dp, color = vanillaColor, CircleShape)
-                            .background(color = Color.Transparent, CircleShape),
-                        borderWidth = 1.dp
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(R.drawable.logo),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Inside,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = "My Device",
-                                        fontFamily = defaultBoldFont,
-                                        fontSize = defaultFontSize
-                                    )
-                                    Text(
-                                        text = "RM 3770 (Estimated)",
-                                        fontFamily = defaultFont,
-                                        fontSize = 11.sp,
-                                        color = Color.DarkGray
-                                    )
-                                }
-                            }
-                            GlassBox(
-                                modifier = Modifier.clickable(enabled = true, onClick = {
-                                    dismissSearch()
-                                    if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
-                                        "${Build.BRAND} ${Build.MODEL}".convertToPart()
-                                    }
-                                }),
-                                isDarkTheme = true,
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(
-                                        horizontal = 8.dp,
-                                        vertical = 4.dp
-                                    ),
-                                    text = "Quote?",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                        Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = null,
+                            contentScale = ContentScale.Inside,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "My Device",
+                                fontFamily = defaultBoldFont,
+                                fontSize = defaultFontSize
+                            )
+                            Text(
+                                text = "RM 3770 (Estimated)",
+                                fontFamily = defaultFont,
+                                fontSize = 11.sp,
+                                color = Color.DarkGray
+                            )
                         }
+                    }
+                    GlassBox(
+                        modifier = Modifier.clickable(enabled = true, onClick = {
+                            dismissSearch()
+                            if (appState.currentUser?.currentUserState != UserState.ThirdParty) {
+                                "${Build.BRAND} ${Build.MODEL}".convertToPart()
+                            }
+                        }),
+                        isDarkTheme = true,
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 4.dp
+                            ),
+                            text = "Quote?",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
 
+            // 商家列表展示
             if (filteredSellers.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
+                        .padding(vertical = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -890,13 +863,13 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
             } else {
                 FlowRow(
                     modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .padding(vertical = 8.dp),
+                        .fillMaxWidth(0.96f)
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(
-                        12.dp,
+                        10.dp,
                         Alignment.CenterHorizontally
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                     itemVerticalAlignment = Alignment.CenterVertically,
                     maxItemsInEachRow = 4
                 ) {
@@ -906,6 +879,9 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             topicText = seller.sellerName,
                             sellerGrade = seller.gradeDetails,
                             image = painterResource(seller.sellerLogo),
+                            maxWidth = 150,
+                            maxHeight = 220,
+                            textmaxWidth = 110,
                             onClick = {
                                 dismissSearch()
                                 drawPopup = true
@@ -917,6 +893,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
             }
         }
 
+        // Popup 弹窗浮层
         if (drawPopup) {
             Box(
                 modifier = Modifier
@@ -945,9 +922,9 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .widthIn(max = 480.dp)
-                            .heightIn(max = 280.dp)
-                            .padding(16.dp)
+                            .widthIn(max = 460.dp)
+                            .heightIn(max = 270.dp)
+                            .padding(14.dp)
                             .background(color = Color.White, shape = RoundedCornerShape(16.dp))
                             .border(
                                 color = Color.Black.copy(alpha = 0.2f),
@@ -958,7 +935,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                         Column(
                             modifier = Modifier
                                 .verticalScroll(popupScrollState)
-                                .padding(8.dp),
+                                .padding(6.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -969,41 +946,41 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             ) {
                                 Column(
                                     modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Text(
                                         "Address: ",
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         fontFamily = defaultBoldFont
                                     )
                                     Text(
                                         currentSeller.address,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontFamily = defaultFont
                                     )
 
-                                    Text("Phone: ", fontSize = 14.sp, fontFamily = defaultBoldFont)
+                                    Text("Phone: ", fontSize = 13.sp, fontFamily = defaultBoldFont)
                                     Text(
                                         currentSeller.phoneNumber,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontFamily = defaultFont
                                     )
 
                                     Text(
                                         "Operation Time: ",
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         fontFamily = defaultBoldFont
                                     )
                                     Text(
                                         currentSeller.operationTime,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         fontFamily = defaultFont
                                     )
                                 }
 
                                 Image(
                                     modifier = Modifier
-                                        .size(100.dp)
+                                        .size(90.dp)
                                         .padding(4.dp),
                                     painter = painterResource(currentSeller.sellerLogo),
                                     contentDescription = null,
@@ -1014,7 +991,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(36.dp)
+                                    .height(34.dp)
                                     .clip(CircleShape)
                                     .background(Color(0xFF4285F4), shape = CircleShape)
                                     .clickable {
@@ -1036,12 +1013,12 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                         imageVector = Icons.Default.LocationOn,
                                         contentDescription = "Map Pin",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                     Text(
                                         text = "Open in Google Maps",
                                         color = Color.White,
-                                        fontSize = defaultFontSize,
+                                        fontSize = 12.sp,
                                         fontFamily = defaultBoldFont
                                     )
                                 }
@@ -1062,7 +1039,7 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                         GlassBox(
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
-                                .heightIn(max = 280.dp),
+                                .heightIn(max = 260.dp),
                             isDarkTheme = true,
                             isHighAlpha = true
                         ) {
@@ -1077,11 +1054,11 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                     itemVerticalAlignment = Alignment.CenterVertically,
                                     maxItemsInEachRow = 5,
                                     verticalArrangement = Arrangement.spacedBy(
-                                        12.dp,
+                                        10.dp,
                                         Alignment.CenterVertically
                                     ),
                                     horizontalArrangement = Arrangement.spacedBy(
-                                        12.dp,
+                                        10.dp,
                                         Alignment.CenterHorizontally
                                     )
                                 ) {
@@ -1090,9 +1067,9 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                                             topicText = device.deviceName,
                                             sellerGrade = Grade.GG,
                                             image = painterResource(device.icon),
-                                            maxWidth = 100,
-                                            maxHeight = 150,
-                                            textmaxWidth = 80
+                                            maxWidth = 90,
+                                            maxHeight = 140,
+                                            textmaxWidth = 75
                                         ) {
                                             device.deviceName.convertToPart()
                                         }

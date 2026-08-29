@@ -1,6 +1,7 @@
 package com.tarumt.recyclean.screen.meeting
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tarumt.recyclean.common.appState
+import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.util.data.Appointment
 
@@ -70,72 +74,203 @@ fun ThirdPartyMeetingScreen(
     appointments: List<Appointment> = appState.pendingAppointments,
     onAppointmentClick: (String) -> Unit = { viewModel.openApprovalDialog(it) }
 ) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     LaunchedEffect(Unit) {
         viewModel.fetchInitialAppointments()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "${viewModel.currentMerchantName} Appointments",
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = defaultFont
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A365D),
-                    titleContentColor = Color.White
-                )
-            )
-        }
-    ) { paddingValues ->
+    if (isLandscape) {
+        // 🔄 Landscape 双列布局（使用指定的居中白色背景容器）
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .background(color = Color.White),
+            contentAlignment = Alignment.Center
         ) {
-            if (viewModel.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color(0xFF2B6CB0)
-                )
-            } else if (appointments.isEmpty()) {
-                Box(
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 左列：商家标题与待办概览卡片
+                Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    contentAlignment = Alignment.Center
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF1A365D), shape = RoundedCornerShape(10.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "${viewModel.currentMerchantName} Meetings",
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = defaultBoldFont,
+                            color = Color.White,
+                            fontSize = 15.sp
+                        )
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.4f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Pending Review",
+                                fontFamily = defaultFont,
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "${appointments.size} Orders",
+                                fontFamily = defaultBoldFont,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2B6CB0)
+                            )
+                            Text(
+                                text = "Review incoming client recycling requests and verify salvageable components breakdown.",
+                                fontFamily = defaultFont,
+                                fontSize = 11.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+                }
+
+                // 右列：预约订单列表
+                Column(
+                    modifier = Modifier
+                        .weight(1.3f)
+                        .fillMaxHeight()
                 ) {
                     Text(
-                        text = "No pending appointments for ${viewModel.currentMerchantName}.\nNew incoming recycle requests will appear here!",
-                        fontFamily = defaultFont,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp
+                        text = "Incoming Requests (${appointments.size})",
+                        fontFamily = defaultBoldFont,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (viewModel.isLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF2B6CB0),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    } else if (appointments.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No pending appointments for ${viewModel.currentMerchantName}.",
+                                fontFamily = defaultFont,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center,
+                                fontSize = 13.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(appointments, key = { it.appointmentId }) { appointment ->
+                                AppointmentCard(
+                                    appointment = appointment,
+                                    onClick = { onAppointmentClick(appointment.appointmentId) }
+                                )
+                            }
+                        }
+                    }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp)
-                ) {
-                    items(appointments) { appointment ->
-                        AppointmentCard(
-                            appointment = appointment,
-                            onClick = { onAppointmentClick(appointment.appointmentId) }
+            }
+        }
+    } else {
+        // 📱 Portrait 原生 TopAppBar + 滚动列表[cite: 13]
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "${viewModel.currentMerchantName} Meetings",
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = defaultBoldFont
                         )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF1A365D),
+                        titleContentColor = Color.White
+                    )
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                if (viewModel.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color(0xFF2B6CB0)
+                    )
+                } else if (appointments.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No pending appointments for ${viewModel.currentMerchantName}.\nNew incoming recycle requests will appear here!",
+                            fontFamily = defaultFont,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = 16.dp)
+                    ) {
+                        items(appointments, key = { it.appointmentId }) { appointment ->
+                            AppointmentCard(
+                                appointment = appointment,
+                                onClick = { onAppointmentClick(appointment.appointmentId) }
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    // --- POP-UP SCREEN UI ---
+    // 审批确认弹窗[cite: 13]
     viewModel.selectedAppointment?.let { appt ->
         AlertDialog(
             onDismissRequest = { viewModel.closeApprovalDialog() },
@@ -144,7 +279,7 @@ fun ThirdPartyMeetingScreen(
             title = {
                 Text(
                     text = "Appointment Approval",
-                    fontFamily = defaultFont,
+                    fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -170,7 +305,7 @@ fun ThirdPartyMeetingScreen(
                         text = "Spare Parts Requested:",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        fontFamily = defaultFont
+                        fontFamily = defaultBoldFont
                     )
 
                     appt.selectedParts.forEach { part ->
@@ -211,13 +346,13 @@ fun ThirdPartyMeetingScreen(
                         Text(
                             text = "Estimated Payout:",
                             fontWeight = FontWeight.Bold,
-                            fontFamily = defaultFont
+                            fontFamily = defaultBoldFont
                         )
                         Text(
                             text = String.format("RM %.2f", appt.estimatedValue),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 16.sp,
-                            fontFamily = defaultFont,
+                            fontFamily = defaultBoldFont,
                             color = Color(0xFF2E7D32)
                         )
                     }
@@ -233,7 +368,7 @@ fun ThirdPartyMeetingScreen(
                         "Verify & Accept",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = defaultFont
+                        fontFamily = defaultBoldFont
                     )
                 }
             },
@@ -244,7 +379,7 @@ fun ThirdPartyMeetingScreen(
                     border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.6f)),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Reject", fontWeight = FontWeight.Bold, fontFamily = defaultFont)
+                    Text("Reject", fontWeight = FontWeight.Bold, fontFamily = defaultBoldFont)
                 }
             }
         )
@@ -260,13 +395,13 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.6f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -274,29 +409,29 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                 Text(
                     text = appointment.deviceName,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = defaultFont,
-                    fontSize = 17.sp,
+                    fontFamily = defaultBoldFont,
+                    fontSize = 16.sp,
                     color = Color.Black
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = "Seller / Client: ${appointment.userName}",
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontFamily = defaultFont,
                     color = Color.DarkGray
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = "Date",
-                        modifier = Modifier.size(15.dp),
+                        modifier = Modifier.size(14.dp),
                         tint = Color(0xFF2B6CB0)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = appointment.scheduledDate,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontFamily = defaultFont,
                         color = Color(0xFF2B6CB0)
                     )
@@ -310,31 +445,32 @@ fun AppointmentCard(appointment: Appointment, onClick: () -> Unit) {
                 Text(
                     text = String.format("RM %.2f", appointment.estimatedValue),
                     fontWeight = FontWeight.ExtraBold,
-                    fontFamily = defaultFont,
-                    fontSize = 16.sp,
+                    fontFamily = defaultBoldFont,
+                    fontSize = 15.sp,
                     color = Color(0xFF1A365D)
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
                         .background(
                             color = Color(0xFFFFF3E0),
                             shape = RoundedCornerShape(6.dp)
                         )
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = appointment.status.name,
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         color = Color(0xFFE65100),
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "View Details",
-                    tint = Color.Gray
+                    tint = Color.Gray,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

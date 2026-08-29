@@ -99,7 +99,7 @@ fun App() {
                     }
             ) {
                 if (isLandscape) {
-                    // 🌟 1. 横屏：左侧放 DrawNavigator，右侧为主内容展示区
+                    // 🌟 1. 横屏：左侧放垂直侧边栏，右侧为 100% 展开的页面内容容器
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
@@ -118,7 +118,7 @@ fun App() {
                         }
                     }
                 } else {
-                    // 📱 2. 竖屏：保持底部 Scaffold 结构
+                    // 📱 2. 竖屏：维持原生 Scaffold 底部导航
                     Scaffold(
                         containerColor = Color.White,
                         bottomBar = {
@@ -126,9 +126,9 @@ fun App() {
                         }
                     ) { innerPadding ->
                         Box(
-                            modifier = Modifier.padding(
-                                if (showNav) innerPadding else PaddingValues(0.dp)
-                            )
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(if (showNav) innerPadding else PaddingValues(0.dp))
                         ) {
                             MainContentNavigator()
                             NotificationManager.CallToast()

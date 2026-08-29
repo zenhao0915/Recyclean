@@ -90,7 +90,7 @@ class DefaultMeetingViewModel : ViewModel() {
                 appointmentId = "APT-9821",
                 userName = "DebugUser",
                 deviceName = "PlayStation 5",
-                scheduledDate = "Pending Date",
+                scheduledDate = "01/01/2026",
                 estimatedValue = 450.00,
                 status = AppointmentStatus.PENDING,
                 selectedParts = listOf(
@@ -103,7 +103,7 @@ class DefaultMeetingViewModel : ViewModel() {
                 appointmentId = "APT-3304",
                 userName = "DebugUser",
                 deviceName = "iPhone 13 Pro",
-                scheduledDate = "Pending Date",
+                scheduledDate = "06/07/2026",
                 estimatedValue = 280.00,
                 status = AppointmentStatus.PENDING,
                 selectedParts = listOf(

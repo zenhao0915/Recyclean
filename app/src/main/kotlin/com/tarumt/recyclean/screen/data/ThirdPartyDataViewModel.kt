@@ -93,10 +93,21 @@ class ThirdPartyDataViewModel : ViewModel() {
             emptyList()
         } else {
             chronologicalList.mapIndexed { index, appt ->
+                // 🌟 核心适配：解析 "dd/MM/yyyy"（如 "28/07/2026" 提取为 "28/07"）
+                val formattedDate = when {
+                    appt.scheduledDate.contains("/") -> {
+                        appt.scheduledDate.substringBeforeLast("/").ifBlank { appt.scheduledDate }
+                    }
+                    appt.scheduledDate.contains(" ") -> appt.scheduledDate.substringBeforeLast(" ")
+                    appt.scheduledDate.contains("-") -> appt.scheduledDate.takeLast(5)
+                    appt.scheduledDate.isNotBlank() -> appt.scheduledDate.take(5)
+                    else -> "N/A"
+                }
+
                 MerchantChartPoint(
                     orderIndex = index + 1,
                     totalSpend = appt.estimatedValue,
-                    dateLabel = "#${index + 1}",
+                    dateLabel = formattedDate,
                     orderCount = 1
                 )
             }
@@ -109,7 +120,7 @@ class ThirdPartyDataViewModel : ViewModel() {
                 appointmentId = "APT-5519",
                 userName = "user_brian",
                 deviceName = "PlayStation 5",
-                scheduledDate = "28 Jul 2026",
+                scheduledDate = "28/07/2026",
                 estimatedValue = 420.00,
                 status = AppointmentStatus.COMPLETED,
                 selectedParts = listOf(
@@ -122,7 +133,7 @@ class ThirdPartyDataViewModel : ViewModel() {
                 appointmentId = "APT-7102",
                 userName = "user_alice",
                 deviceName = "Dell XPS 13",
-                scheduledDate = "02 Aug 2026",
+                scheduledDate = "02/08/2026",
                 estimatedValue = 540.00,
                 status = AppointmentStatus.COMPLETED,
                 selectedParts = listOf(
@@ -136,7 +147,7 @@ class ThirdPartyDataViewModel : ViewModel() {
                 appointmentId = "APT-8821",
                 userName = "user_kevin",
                 deviceName = "iPhone 12 Pro Max",
-                scheduledDate = "12 Aug 2026",
+                scheduledDate = "12/08/2026",
                 estimatedValue = 320.00,
                 status = AppointmentStatus.COMPLETED,
                 selectedParts = listOf(
@@ -149,7 +160,7 @@ class ThirdPartyDataViewModel : ViewModel() {
                 appointmentId = "APT-9930",
                 userName = "user_diana",
                 deviceName = "MacBook Pro M1",
-                scheduledDate = "14 Aug 2026",
+                scheduledDate = "14/08/2026",
                 estimatedValue = 780.00,
                 status = AppointmentStatus.COMPLETED,
                 selectedParts = listOf(

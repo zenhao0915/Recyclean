@@ -1,22 +1,32 @@
 package com.tarumt.recyclean.screen.data
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AutoGraph
@@ -24,6 +34,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,8 +44,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -42,12 +58,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tarumt.recyclean.common.defaultBoldFont
 import com.tarumt.recyclean.common.defaultFont
 import com.tarumt.recyclean.common.skyBlueColor
 import com.tarumt.recyclean.util.DrawTemplate
@@ -57,7 +75,10 @@ import com.tarumt.recyclean.util.data.Appointment
 @Preview
 fun ThirdPartyDataScreen(
     viewModel: ThirdPartyDataViewModel = viewModel()
-) = DrawTemplate {
+) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     LaunchedEffect(Unit) {
         viewModel.fetchMerchantData()
     }
@@ -65,6 +86,37 @@ fun ThirdPartyDataScreen(
     val transactions = viewModel.purchasedTransactions
     val chartPoints = viewModel.chartPoints
 
+    if (isLandscape) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            ThirdPartyDataLandscapeContent(
+                viewModel = viewModel,
+                transactions = transactions,
+                chartPoints = chartPoints
+            )
+        }
+    } else {
+        ThirdPartyDataPortraitContent(
+            viewModel = viewModel,
+            transactions = transactions,
+            chartPoints = chartPoints
+        )
+    }
+}
+
+// =============================================================================
+// 📱 1. Portrait 视图
+// =============================================================================
+@Composable
+private fun ThirdPartyDataPortraitContent(
+    viewModel: ThirdPartyDataViewModel,
+    transactions: List<Appointment>,
+    chartPoints: List<MerchantChartPoint>
+) = DrawTemplate {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,7 +126,7 @@ fun ThirdPartyDataScreen(
     ) {
         Text(
             text = "Procurement Analytics",
-            fontFamily = defaultFont,
+            fontFamily = defaultBoldFont,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black
@@ -106,7 +158,7 @@ fun ThirdPartyDataScreen(
         ) {
             Text(
                 text = "Completed Purchase Orders (${transactions.size})",
-                fontFamily = defaultFont,
+                fontFamily = defaultBoldFont,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -140,12 +192,105 @@ fun ThirdPartyDataScreen(
     }
 }
 
+// =============================================================================
+// 🔄 2. Landscape 视图
+// =============================================================================
+@Composable
+private fun ThirdPartyDataLandscapeContent(
+    viewModel: ThirdPartyDataViewModel,
+    transactions: List<Appointment>,
+    chartPoints: List<MerchantChartPoint>
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1.1f)
+                .fillMaxHeight()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Procurement Analytics",
+                fontFamily = defaultBoldFont,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            MerchantProcurementCard(
+                totalSpend = viewModel.totalProcurementCost,
+                devicesCount = viewModel.totalDevicesPurchased,
+                partsCount = viewModel.totalPartsAcquired,
+                isLandscape = true
+            )
+
+            if (chartPoints.isNotEmpty()) {
+                ProcurementTrendChartCard(points = chartPoints, isLandscape = true)
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1.2f)
+                .fillMaxHeight()
+        ) {
+            Text(
+                text = "Completed Orders (${transactions.size})",
+                fontFamily = defaultBoldFont,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (viewModel.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = skyBlueColor, modifier = Modifier.size(28.dp))
+                }
+            } else if (transactions.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No completed purchase orders found.",
+                        fontFamily = defaultFont,
+                        color = Color.Gray,
+                        fontSize = 13.sp
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(transactions, key = { it.appointmentId }) { item ->
+                        MerchantTransactionCard(appointment = item)
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
- * 🌟 逐单交易趋势曲线图表卡片 (按单笔交易金额绘制)
+ * 🌟 逐单交易趋势曲线图表卡片
  */
 @SuppressLint("DefaultLocale")
 @Composable
-fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
+fun ProcurementTrendChartCard(
+    points: List<MerchantChartPoint>,
+    isLandscape: Boolean = false
+) {
     val displayPoints = points.takeLast(6)
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,8 +302,8 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(if (isLandscape) 12.dp else 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -175,7 +320,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Transactions Done",
-                        fontFamily = defaultFont,
+                        fontFamily = defaultBoldFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = Color.Black
@@ -183,9 +328,9 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 }
 
                 Text(
-                    text = "${displayPoints.size} Orders",
+                    text = "${points.size} Orders",
                     fontFamily = defaultFont,
-                    fontSize = 8.sp,
+                    fontSize = 10.sp,
                     color = Color.Gray,
                     fontWeight = FontWeight.Medium
                 )
@@ -196,8 +341,8 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(145.dp)
-                    .padding(top = 10.dp, bottom = 4.dp)
+                    .height(if (isLandscape) 120.dp else 145.dp)
+                    .padding(top = 8.dp, bottom = 4.dp)
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val width = size.width
@@ -217,7 +362,7 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
 
                     if (displayPoints.size == 1) {
                         val pointY =
-                            height - (points[0].totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
+                            height - (displayPoints[0].totalSpend.toFloat() / maxSpend.toFloat() * (height * 0.78f))
                         drawCircle(
                             color = Color(0xFF2B6CB0),
                             radius = 6.dp.toPx(),
@@ -283,19 +428,35 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
                 }
             }
 
+            // 🌟 底部 X 轴：同时展示订单序号 (#1)、交易日期 (28 Jul) 和金额 (RM 420)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 displayPoints.forEach { point ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        // 1. 订单编号
                         Text(
-                            text = point.dateLabel,
-                            fontFamily = defaultFont,
+                            text = "#${point.orderIndex}",
+                            fontFamily = defaultBoldFont,
                             fontSize = 11.sp,
                             color = Color(0xFF1A365D),
                             fontWeight = FontWeight.Bold
                         )
+
+                        // 2. 真实交易日期
+                        Text(
+                            text = point.dateLabel,
+                            fontFamily = defaultFont,
+                            fontSize = 9.sp,
+                            color = Color(0xFF2B6CB0),
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        // 3. 交易金额
                         Text(
                             text = String.format("RM %.0f", point.totalSpend),
                             fontFamily = defaultFont,
@@ -310,17 +471,21 @@ fun ProcurementTrendChartCard(points: List<MerchantChartPoint>) {
     }
 }
 
+/**
+ * 🌟 商家采购统计看板卡片
+ */
 @SuppressLint("DefaultLocale")
 @Composable
 fun MerchantProcurementCard(
     totalSpend: Double,
     devicesCount: Int,
-    partsCount: Int
+    partsCount: Int,
+    isLandscape: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Box(
             modifier = Modifier
@@ -330,20 +495,20 @@ fun MerchantProcurementCard(
                         colors = listOf(Color(0xFF1A365D), Color(0xFF2B6CB0))
                     )
                 )
-                .padding(20.dp)
+                .padding(if (isLandscape) 14.dp else 20.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (isLandscape) 10.dp else 16.dp)) {
                 Column {
                     Text(
                         text = "Total Procurement Spend",
                         fontFamily = defaultFont,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
                     Text(
                         text = String.format("RM %.2f", totalSpend),
-                        fontFamily = defaultFont,
-                        fontSize = 30.sp,
+                        fontFamily = defaultBoldFont,
+                        fontSize = if (isLandscape) 24.sp else 30.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White
                     )
@@ -379,9 +544,9 @@ fun MerchantStatItem(icon: ImageVector, label: String, value: String) {
             imageVector = icon,
             contentDescription = label,
             tint = Color.White,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(18.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         Column {
             Text(
                 text = label,
@@ -391,8 +556,8 @@ fun MerchantStatItem(icon: ImageVector, label: String, value: String) {
             )
             Text(
                 text = value,
-                fontFamily = defaultFont,
-                fontSize = 14.sp,
+                fontFamily = defaultBoldFont,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -401,23 +566,37 @@ fun MerchantStatItem(icon: ImageVector, label: String, value: String) {
 }
 
 /**
- * 🌟 商家采购单卡片
+ * 🌟 支持展开/收起的商家采购单卡片
  */
 @SuppressLint("DefaultLocale")
 @Composable
 fun MerchantTransactionCard(appointment: Appointment) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val arrowRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "ArrowRotation"
+    )
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                isExpanded = !isExpanded
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         border = BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.6f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -426,35 +605,48 @@ fun MerchantTransactionCard(appointment: Appointment) {
             ) {
                 Text(
                     text = appointment.deviceName.ifBlank { "Unknown Device" },
-                    fontFamily = defaultFont,
+                    fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     color = Color.Black
                 )
 
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0xFFE8F5E9),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Completed",
-                            tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "COMPLETED",
-                            fontSize = 10.sp,
-                            color = Color(0xFF2E7D32),
-                            fontWeight = FontWeight.Bold
-                        )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                color = Color(0xFFE8F5E9),
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Completed",
+                                tint = Color(0xFF2E7D32),
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "COMPLETED",
+                                fontSize = 9.sp,
+                                color = Color(0xFF2E7D32),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = Color.Gray,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(arrowRotation)
+                    )
                 }
             }
 
@@ -462,10 +654,10 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = "Client",
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(14.dp),
                     tint = Color.Gray
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = "Seller / Client: ${appointment.userName.ifBlank { "Anonymous" }}",
                     fontFamily = defaultFont,
@@ -478,10 +670,10 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Date",
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(14.dp),
                     tint = Color.Gray
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = "Acquisition Date: ${appointment.scheduledDate}",
                     fontFamily = defaultFont,
@@ -490,38 +682,47 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 )
             }
 
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
-
-            Text(
-                text = "Acquired Parts Breakdown:",
-                fontFamily = defaultFont,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Gray
-            )
-
-            appointment.selectedParts.forEach { part ->
-                Row(
+            // 展开后的零件拆解清单
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.35f))
+
                     Text(
-                        text = "• ${part.name}",
+                        text = "Acquired Parts Breakdown:",
                         fontFamily = defaultFont,
-                        fontSize = 13.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.weight(1f)
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray
                     )
-                    Text(
-                        text = String.format("RM %.2f", part.estimatedPrice),
-                        fontFamily = defaultFont,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+
+                    appointment.selectedParts.forEach { part ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "• ${part.name}",
+                                fontFamily = defaultFont,
+                                fontSize = 12.sp,
+                                color = Color.DarkGray,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = String.format("RM %.2f", part.estimatedPrice),
+                                fontFamily = defaultFont,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
             }
 
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.35f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -533,13 +734,13 @@ fun MerchantTransactionCard(appointment: Appointment) {
                         imageVector = Icons.Default.Payments,
                         contentDescription = "Cost",
                         tint = Color(0xFF2B6CB0),
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = "Procurement Cost",
                         fontFamily = defaultFont,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.DarkGray
                     )
@@ -547,9 +748,9 @@ fun MerchantTransactionCard(appointment: Appointment) {
 
                 Text(
                     text = String.format("RM %.2f", appointment.estimatedValue),
-                    fontFamily = defaultFont,
+                    fontFamily = defaultBoldFont,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     color = Color(0xFF1A365D)
                 )
             }
