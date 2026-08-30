@@ -67,7 +67,7 @@ class AdminDataViewModel : ViewModel() {
     val completedTransactions = mutableStateListOf<Appointment>()
 
     private val currentUsername: String
-        get() = appState.currentUser?.userName?.trim() ?: "Admin"
+        get() = appState.currentUser?.userNameWithEmail?.trim() ?: "Admin"
 
     val filteredUsers: List<UserData>
         get() = if (searchQuery.isBlank()) {
@@ -131,7 +131,7 @@ class AdminDataViewModel : ViewModel() {
                 userList.clear()
                 userDtos.forEach { dto ->
                     val cleanUsername = dto.username ?: "User_${dto.id.take(4)}"
-                    val revenue = revenueMap[cleanUsername] ?: revenueMap[dto.id] ?: 0.0
+                    val revenue = revenueMap["$cleanUsername@recyclean.app"] ?: revenueMap[dto.id] ?: 0.0
 
                     val level = when {
                         revenue >= 3000.0 -> "Platinum"

@@ -265,6 +265,7 @@ class LoginViewModel : ViewModel() {
                     email = fullUsername,
                     password = trimmedPassword,
                     securityPin = trimmedPin,
+                    username = userNameInput,
                     role = UserState.Normal.name,
                     isBlacklisted = false
                 )

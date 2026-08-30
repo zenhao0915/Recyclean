@@ -62,4 +62,21 @@ class AppState {
     var currentVerificationAppointment by mutableStateOf<Appointment?>(null)
 
     val pendingAppointments = mutableStateListOf<Appointment>()
+
+    fun resetAddSellSession() {
+        deviceToSell = null
+        cachedBitmap = null
+        showResult = false
+        detectedDeviceName = ""
+        cachedPartList.clear()
+        selectedSeller = Sellers.SenHeng
+    }
+
+    fun resetAllSession() {
+        currentUser = null
+        currentUserState = UserState.Normal
+        currentVerificationAppointment = null
+        pendingAppointments.clear()
+        resetAddSellSession()
+    }
 }

@@ -9,6 +9,7 @@ data class UserProfileDto(
     val email: String? = null,
     val password: String? = null,
     @SerialName("security_pin") val securityPin: String? = null,
+    val username: String? = null,
     val role: String? = null,
     @SerialName("is_blacklisted") val isBlacklisted: Boolean? = false,
     @SerialName("blacklist_reason") val blacklistReason: String? = null

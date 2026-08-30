@@ -13,8 +13,8 @@ class ProfileViewModel : ViewModel() {
     fun processUserLogout(context: Context? = null) = runCatching {
         context?.let { SessionManager.clearSession(it) }
 
-        appState.currentUser = null
-        appState.currentUserState = UserState.Normal
+        appState.resetAllSession()
+
         NotificationManager.addToast(
             "Logged out successfully!",
             isSuccess = true,
