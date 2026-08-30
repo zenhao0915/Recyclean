@@ -1,6 +1,8 @@
 package com.tarumt.recyclean.screen.data
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,25 +18,21 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
 class DefaultDataViewModel : ViewModel() {
-
-    // 已完成的交易历史列表
     val completedTransactions = mutableStateListOf<Appointment>()
 
     var isLoading by mutableStateOf(false)
         private set
 
-    // 统计指标数据
-    var totalEarnings by mutableStateOf(0.0)
+    var totalEarnings by mutableDoubleStateOf(0.0)
         private set
 
-    var totalDevicesCount by mutableStateOf(0)
+    var totalDevicesCount by mutableIntStateOf(0)
         private set
 
-    var totalPartsSavedCount by mutableStateOf(0)
+    var totalPartsSavedCount by mutableIntStateOf(0)
         private set
 
     fun fetchTransactionHistory() {
-        // 1. Debug 模式逻辑
         if (appState.isDebuggerMode) {
             completedTransactions.clear()
             completedTransactions.addAll(getMockHistory())
@@ -42,8 +40,7 @@ class DefaultDataViewModel : ViewModel() {
             return
         }
 
-        // 2. Supabase 模式逻辑：只拉取状态为 COMPLETED 的订单
-        val userEmail = appState.currentUser?.userName?.trim() ?: return
+        val userEmail = appState.currentUser?.userNameWithEmail?.trim() ?: return
 
         viewModelScope.launch {
             isLoading = true

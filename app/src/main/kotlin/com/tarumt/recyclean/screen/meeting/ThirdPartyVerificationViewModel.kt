@@ -12,6 +12,7 @@ import com.tarumt.recyclean.notification.NotificationManager
 import com.tarumt.recyclean.screen.addsell.SalvageablePart
 import com.tarumt.recyclean.util.data.Appointment
 import com.tarumt.recyclean.util.data.AppointmentCompleteUpdateDto
+import com.tarumt.recyclean.util.data.SalvageablePartDto
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 
@@ -82,10 +83,19 @@ class ThirdPartyVerificationViewModel : ViewModel() {
         isSubmitting = true
         viewModelScope.launch {
             try {
+                val partDtos = checkedParts.map { part ->
+                    SalvageablePartDto(
+                        name = part.name,
+                        estimatedPrice = part.estimatedPrice,
+                        isSelected = part.isSelected
+                    )
+                }
+
                 appState.supabase.from("appointments").update(
                     AppointmentCompleteUpdateDto(
                         status = "COMPLETED",
-                        estimatedValue = totalPayout
+                        estimatedValue = totalPayout,
+                        selectedParts = partDtos
                     )
                 ) {
                     filter {

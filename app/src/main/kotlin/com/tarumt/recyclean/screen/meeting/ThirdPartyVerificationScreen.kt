@@ -103,7 +103,6 @@ fun ThirdPartyVerificationScreen(
         }
     ) { paddingValues ->
         if (isLandscape) {
-            // 🔄 横屏双列分栏
             VerificationLandscapeContent(
                 modifier = Modifier
                     .fillMaxSize()
@@ -125,7 +124,6 @@ fun ThirdPartyVerificationScreen(
         }
     }
 
-    // 完成动画弹窗
     if (viewModel.doneSubmission) {
         LaunchedEffect(Unit) {
             delay(2500L.milliseconds)
@@ -175,9 +173,6 @@ fun ThirdPartyVerificationScreen(
     }
 }
 
-// =============================================================================
-// 📱 竖屏视图（你的原始布局）
-// =============================================================================
 @SuppressLint("DefaultLocale")
 @Composable
 private fun VerificationPortraitContent(

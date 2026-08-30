@@ -29,7 +29,9 @@ data class AppointmentCompleteUpdateDto(
     @SerialName("status")
     val status: String,
     @SerialName("estimated_value")
-    val estimatedValue: Double
+    val estimatedValue: Double,
+    @SerialName("selected_parts")
+    val selectedParts: List<SalvageablePartDto>
 )
 
 data class Appointment(

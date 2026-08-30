@@ -365,7 +365,7 @@ fun ThirdPartyMeetingScreen(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        "Verify & Accept",
+                        "Verify",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontFamily = defaultBoldFont
