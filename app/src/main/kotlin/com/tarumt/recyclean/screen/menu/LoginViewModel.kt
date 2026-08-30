@@ -23,6 +23,9 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 class LoginViewModel : ViewModel() {
+    var usernameInput by mutableStateOf("")
+    var passwordInput by mutableStateOf("")
+
     var isLoading by mutableStateOf(false)
         private set
 
@@ -38,9 +41,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    // =========================================================================
-    // 🌟 自动登录：读取本地凭据并通过 SQL (SELECT WHERE) 向 Supabase 重新验证
-    // =========================================================================
     suspend fun checkAutoLogin(context: Context, onComplete: () -> Unit = {}): Boolean {
         if (appState.isDebuggerMode) {
             withContext(Dispatchers.Main) { onComplete() }
@@ -55,7 +55,6 @@ class LoginViewModel : ViewModel() {
                 val (savedUsername, savedPassword) = savedCredentials
 
                 val isSuccess = withTimeoutOrNull(8000L.milliseconds) {
-                    // SQL 等价: SELECT * FROM users WHERE username = ? AND password = ?
                     val matchedUsers = appState.supabase.from("users")
                         .select {
                             filter {
@@ -65,14 +64,12 @@ class LoginViewModel : ViewModel() {
                         }.decodeList<UserProfileDto>()
 
                     if (matchedUsers.isEmpty()) {
-                        // 远程密码已被修改或用户已不存在，清理本地失效 Session
                         SessionManager.clearSession(context)
                         return@withTimeoutOrNull false
                     }
 
                     val profile = matchedUsers.first()
 
-                    // 检查黑名单封禁状态
                     if (profile.isBlacklisted == true) {
                         SessionManager.clearSession(context)
                         appState.currentUser = null
@@ -100,7 +97,6 @@ class LoginViewModel : ViewModel() {
 
                     NotificationManager.addToast("Session Restored!", isSuccess = true)
 
-                    // 切回主线程跳转页面
                     withContext(Dispatchers.Main) {
                         appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
                     }
@@ -120,9 +116,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    // =========================================================================
-    // 1. 用户登录: 校验通过后调用 SessionManager.saveSession
-    // =========================================================================
     fun processUserLogin(
         userName: String,
         password: String,
@@ -200,7 +193,6 @@ class LoginViewModel : ViewModel() {
                     return@launch
                 }
 
-                // 🌟 保存 Session 到本地
                 context?.let { SessionManager.saveSession(it, fullUsername, trimmedPassword) }
 
                 isLoading = false
@@ -212,6 +204,8 @@ class LoginViewModel : ViewModel() {
 
                 NotificationManager.addToast("Welcome back, $userName!", isSuccess = true)
                 appState.navigator.navigateTo(HomePageDestination, appState.lastTouchOffset)
+                usernameInput = ""
+                passwordInput = ""
 
             } catch (e: Exception) {
                 isLoading = false
@@ -221,9 +215,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    // =========================================================================
-    // 2. 用户注册
-    // =========================================================================
     fun processRegisterUser(
         userNameInput: String,
         passwordInput: String,
@@ -292,9 +283,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    // =========================================================================
-    // 3. 忘记密码重置
-    // =========================================================================
     fun processForgetPassword(
         usernameInput: String,
         securityPinInput: String,

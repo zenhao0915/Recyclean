@@ -88,9 +88,6 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
             modifier = Modifier.fillMaxSize()
         )
 
-        val username = rememberSaveable { mutableStateOf("") }
-        val password = rememberSaveable { mutableStateOf("") }
-
         GlassBox(
             modifier = Modifier
                 .width(cardWidth)
@@ -122,12 +119,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        LoginFormFields(
-                            viewModel,
-                            username = username.value,
-                            onUsernameChange = { username.value = it.replace("\\", "") },
-                            password = password.value,
-                            onPasswordChange = { password.value = it.replace("\\", "") })
+                        LoginFormFields(viewModel)
                     }
                 }
             } else {
@@ -147,18 +139,12 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        LoginFormFields(
-                            viewModel,
-                            username = username.value,
-                            onUsernameChange = { username.value = it.replace("\\", "") },
-                            password = password.value,
-                            onPasswordChange = { password.value = it.replace("\\", "") })
+                        LoginFormFields(viewModel)
                     }
                 }
             }
         }
 
-        // 🌟 统一全屏转圈加载遮罩
         if (viewModel.isLoading) {
             Dialog(
                 onDismissRequest = { },
@@ -204,22 +190,19 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) =
     }
 
 @Composable
-fun LoginFormFields(
-    viewModel: LoginViewModel,
-    username: String,
-    onUsernameChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit
-) {
+fun LoginFormFields(viewModel: LoginViewModel) {
     val context = LocalContext.current
     val showRegisterPinDialog = rememberSaveable { mutableStateOf(false) }
     val showForgetPasswordDialog = rememberSaveable { mutableStateOf(false) }
 
     val registerPin = rememberSaveable { mutableStateOf("") }
-
     val resetUsername = rememberSaveable { mutableStateOf("") }
     val resetPin = rememberSaveable { mutableStateOf("") }
     val resetNewPassword = rememberSaveable { mutableStateOf("") }
+
+    // 🌟 直接绑定 ViewModel 的状态
+    val username = viewModel.usernameInput
+    val password = viewModel.passwordInput
 
     // Username Input
     GlassBox(
@@ -232,7 +215,7 @@ fun LoginFormFields(
     ) {
         TextField(
             value = username,
-            onValueChange = onUsernameChange,
+            onValueChange = { viewModel.usernameInput = it.replace("\\", "") },
             placeholder = {
                 Text(
                     text = "Username",
@@ -266,7 +249,7 @@ fun LoginFormFields(
     ) {
         TextField(
             value = password,
-            onValueChange = onPasswordChange,
+            onValueChange = { viewModel.passwordInput = it.replace("\\", "") },
             placeholder = {
                 Text(
                     text = "Password",
@@ -291,7 +274,8 @@ fun LoginFormFields(
 
     // Buttons Row
     Row(
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         // Register Button
         GlassBox(
@@ -381,7 +365,8 @@ fun LoginFormFields(
                         appState.currentUser?.currentUserState = userState
                     }
                     .padding(horizontal = 14.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center) {
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     text = userState.name,
                     fontFamily = if (isSelected) defaultBoldFont else defaultFont,
@@ -408,9 +393,6 @@ fun LoginFormFields(
         textDecoration = TextDecoration.Underline
     )
 
-    // =========================================================================
-    // 🌟 1. 注册设置 Security PIN 弹窗
-    // =========================================================================
     if (showRegisterPinDialog.value) {
         AlertDialog(
             onDismissRequest = { showRegisterPinDialog.value = false },
@@ -458,7 +440,8 @@ fun LoginFormFields(
                                 userNameInput = username,
                                 passwordInput = password,
                                 securityPinInput = registerPin.value,
-                                userState = appState.currentUserState
+                                userState = appState.currentUserState,
+                                context = context
                             )
                             registerPin.value = ""
                         } else {
@@ -485,9 +468,6 @@ fun LoginFormFields(
         )
     }
 
-    // =========================================================================
-    // 🌟 2. 重置密码 弹窗 (PIN 码认证)
-    // =========================================================================
     if (showForgetPasswordDialog.value) {
         AlertDialog(
             onDismissRequest = { showForgetPasswordDialog.value = false },
