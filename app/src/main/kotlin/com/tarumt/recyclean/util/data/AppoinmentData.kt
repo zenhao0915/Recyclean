@@ -46,7 +46,7 @@ data class Appointment(
 )
 
 enum class AppointmentStatus {
-    PENDING, REVIEWED, COMPLETED
+    PENDING, CANCELLED, COMPLETED
 }
 
 fun AppointmentDto.toAppointment(): Appointment {
