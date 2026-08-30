@@ -21,9 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -160,9 +158,11 @@ fun ProfileScreenPortrait(viewModel: ProfileViewModel) = DrawTemplate {
             horizontalAlignment = Alignment.Start
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().clickable(enabled = true, onClick = {
-                    viewModel.processUserLogout(context)
-                }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = true, onClick = {
+                        viewModel.processUserLogout(context)
+                    }),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -281,7 +281,11 @@ fun ProfileScreenLandscape(viewModel: ProfileViewModel) = DrawTemplate {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .border(width = 0.5.dp, color = Color.Black.copy(alpha = 0.3f), shape = RoundedCornerShape(12.dp))
+                    .border(
+                        width = 0.5.dp,
+                        color = Color.Black.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -303,22 +307,6 @@ fun ProfileScreenLandscape(viewModel: ProfileViewModel) = DrawTemplate {
                         )
                         Text(
                             "Logout",
-                            fontFamily = defaultBoldFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = defaultFontSize
-                        )
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
-                        Text(
-                            "Settings",
                             fontFamily = defaultBoldFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = defaultFontSize
