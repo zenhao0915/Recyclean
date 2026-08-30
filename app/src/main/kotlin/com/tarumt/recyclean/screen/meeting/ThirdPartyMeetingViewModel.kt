@@ -39,16 +39,12 @@ class ThirdPartyMeetingViewModel : ViewModel() {
         listenToRealtimeAppointments()
     }
 
-    /**
-     * 🌟 2. 初次拉取：使用 ilike 忽略大小写匹配 target_seller
-     */
     fun fetchInitialAppointments() {
         if (appState.isDebuggerMode) return
 
         viewModelScope.launch {
             isLoading = true
             try {
-                // 🌟 使用 ilike 模糊忽略大小写匹配（如 "senheng" 匹配 "SenHeng"）
                 val dtos = appState.supabase.from("appointments")
                     .select {
                         filter {
@@ -67,7 +63,6 @@ class ThirdPartyMeetingViewModel : ViewModel() {
                 )
             } catch (e: Exception) {
                 Log.e("ThirdPartyMeeting", "Failed to fetch appointments", e)
-                // 🌟 弹出详细报错信息，杜绝静默失败
                 NotificationManager.addToast(
                     "Fetch error: ${e.localizedMessage}",
                     isSuccess = false
@@ -100,7 +95,6 @@ class ThirdPartyMeetingViewModel : ViewModel() {
                     val newDto = change.decodeRecord<AppointmentDto>()
                     val newAppointment = newDto.toAppointment()
 
-                    // 忽略大小写比对商家名称
                     if (newAppointment.targetSeller.trim()
                             .equals(currentMerchantName.trim(), ignoreCase = true) &&
                         newAppointment.status == AppointmentStatus.PENDING

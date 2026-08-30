@@ -53,11 +53,9 @@ class AddSellViewModel : ViewModel() {
         Return [] if non-electronic.
     """.trimIndent()
 
-    // 🌟 检查当前操作者是否已被黑名单封禁 (SQL: SELECT * FROM users WHERE email = ?)
     private suspend fun checkIsUserBlacklisted(): Boolean {
         if (appState.isDebuggerMode) return false
 
-        // 🌟 从全局 appState 中获取当前登录用户的 Email
         val currentEmail = appState.currentUser?.userNameWithEmail ?: return false
 
         return try {
@@ -112,7 +110,6 @@ class AddSellViewModel : ViewModel() {
         appState.cachedBitmap = bitmap
         errorMessage = ""
         viewModelScope.launch {
-            // 🌟 触发 AI 分析前检查黑名单
             if (checkIsUserBlacklisted()) return@launch
 
             isAnalyzing = true
@@ -143,7 +140,6 @@ class AddSellViewModel : ViewModel() {
     fun analyzeDeviceText(manualInput: String) {
         errorMessage = ""
         viewModelScope.launch {
-            // 🌟 触发 AI 分析前检查黑名单
             if (checkIsUserBlacklisted()) return@launch
 
             isAnalyzing = true

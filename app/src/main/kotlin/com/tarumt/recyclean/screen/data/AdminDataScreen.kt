@@ -91,7 +91,6 @@ fun AdminDataScreen(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    // 🌟 进入页面时清空搜索内容并重新抓取数据
     LaunchedEffect(Unit) {
         viewModel.searchQuery = ""
         viewModel.selectedUserId = null
@@ -136,9 +135,6 @@ fun AdminDataScreen(
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait Dashboard
-// =============================================================================
 @Composable
 private fun AdminDashboardPortrait(
     viewModel: AdminDataViewModel,
@@ -223,9 +219,6 @@ private fun AdminDashboardPortrait(
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape Dashboard
-// =============================================================================
 @Composable
 private fun AdminDashboardLandscape(
     viewModel: AdminDataViewModel,
@@ -325,9 +318,6 @@ private fun AdminDashboardLandscape(
     }
 }
 
-/**
- * 🌟 用户搜索框与列表公共组件 (带一键清空按钮)
- */
 @Composable
 private fun UserSearchAndListContent(viewModel: AdminDataViewModel) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -415,9 +405,6 @@ private fun UserSearchAndListContent(viewModel: AdminDataViewModel) {
     }
 }
 
-/**
- * 🌟 用户信息简卡
- */
 @Composable
 fun UserProfileBox(
     userName: String,
@@ -496,9 +483,6 @@ fun UserProfileBox(
     }
 }
 
-/**
- * 🌟 用户详情与风控封禁页
- */
 @Composable
 fun UserPage(
     user: UserData,
@@ -935,7 +919,6 @@ fun TransactionCard(appointment: Appointment) {
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // 头部：设备名称 + COMPLETED 标签 + 展开箭头
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1020,7 +1003,6 @@ fun TransactionCard(appointment: Appointment) {
                 )
             }
 
-            // 🌟 核心：仅在展开时显示的零件明细部分
             AnimatedVisibility(visible = isExpanded) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -1061,7 +1043,6 @@ fun TransactionCard(appointment: Appointment) {
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
 
-            // 底部：实收总额
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -82,7 +82,6 @@ fun ThirdPartyMeetingScreen(
     }
 
     if (isLandscape) {
-        // 🔄 Landscape 双列布局（使用指定的居中白色背景容器）
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -95,7 +94,6 @@ fun ThirdPartyMeetingScreen(
                     .padding(14.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 左列：商家标题与待办概览卡片
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -151,7 +149,6 @@ fun ThirdPartyMeetingScreen(
                     }
                 }
 
-                // 右列：预约订单列表
                 Column(
                     modifier = Modifier
                         .weight(1.3f)
@@ -207,7 +204,6 @@ fun ThirdPartyMeetingScreen(
             }
         }
     } else {
-        // 📱 Portrait 原生 TopAppBar + 滚动列表[cite: 13]
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -270,7 +266,6 @@ fun ThirdPartyMeetingScreen(
         }
     }
 
-    // 审批确认弹窗[cite: 13]
     viewModel.selectedAppointment?.let { appt ->
         AlertDialog(
             onDismissRequest = { viewModel.closeApprovalDialog() },

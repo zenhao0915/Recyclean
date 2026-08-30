@@ -200,7 +200,6 @@ fun LoginFormFields(viewModel: LoginViewModel) {
     val resetPin = rememberSaveable { mutableStateOf("") }
     val resetNewPassword = rememberSaveable { mutableStateOf("") }
 
-    // 🌟 直接绑定 ViewModel 的状态
     val username = viewModel.usernameInput
     val password = viewModel.passwordInput
 

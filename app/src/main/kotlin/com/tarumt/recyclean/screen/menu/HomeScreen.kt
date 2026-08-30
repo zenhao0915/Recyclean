@@ -90,9 +90,6 @@ fun HomeScreen(viewModel: HomeScreenViewModel = viewModel()) {
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait View
-// =============================================================================
 @Composable
 fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
@@ -575,9 +572,6 @@ fun HomeScreenPortrait(viewModel: HomeScreenViewModel) {
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape View (适配左侧垂直 Navigator)
-// =============================================================================
 @Composable
 fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
     val scrollableState = rememberScrollState()
@@ -630,7 +624,6 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // 🌟 顶部栏：紧凑美观的横向搜索框（适配右侧内容区宽度）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -846,8 +839,6 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
                     }
                 }
             }
-
-            // 商家列表展示
             if (filteredSellers.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -895,7 +886,6 @@ fun HomeScreenLandscape(viewModel: HomeScreenViewModel) {
             }
         }
 
-        // Popup 弹窗浮层
         if (drawPopup) {
             Box(
                 modifier = Modifier

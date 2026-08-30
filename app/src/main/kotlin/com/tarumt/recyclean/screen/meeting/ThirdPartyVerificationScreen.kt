@@ -112,7 +112,6 @@ fun ThirdPartyVerificationScreen(
                 viewModel = viewModel
             )
         } else {
-            // 📱 竖屏单列布局（保持你的原版结构）
             VerificationPortraitContent(
                 modifier = Modifier
                     .fillMaxSize()
@@ -309,9 +308,6 @@ private fun VerificationPortraitContent(
     }
 }
 
-// =============================================================================
-// 🔄 横屏视图（左侧清单，右侧结算与按钮）
-// =============================================================================
 @SuppressLint("DefaultLocale")
 @Composable
 private fun VerificationLandscapeContent(
@@ -323,7 +319,6 @@ private fun VerificationLandscapeContent(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 左侧：零件清单 Checkbox 滚动列表
         Column(
             modifier = Modifier
                 .weight(1.3f)
@@ -384,7 +379,6 @@ private fun VerificationLandscapeContent(
             }
         }
 
-        // 右侧：设备详情 + 结算总额 + 提交按钮
         Card(
             modifier = Modifier
                 .weight(1f)

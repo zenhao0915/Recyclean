@@ -163,9 +163,7 @@ fun DrawNavigator() {
     }
 }
 
-// =============================================================================
-// 🔄 1. Landscape 模式：左侧垂直导航胶囊导轨
-// =============================================================================
+@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 private fun LandscapeLeftNavigator() {
     Box(
@@ -305,7 +303,6 @@ private fun LandscapeLeftNavigator() {
                     modifier = modifierWithGestures,
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    // 纵向滑动高亮胶囊
                     Box(
                         modifier = Modifier
                             .offset(y = animatedPillOffset)
@@ -325,7 +322,6 @@ private fun LandscapeLeftNavigator() {
                         )
                     }
 
-                    // 垂直 5 个导航按钮
                     Column(
                         modifier = Modifier.fillMaxHeight(),
                         verticalArrangement = Arrangement.Center,
@@ -369,9 +365,6 @@ private fun LandscapeLeftNavigator() {
     }
 }
 
-// =============================================================================
-// 📱 2. Portrait 模式：底部横向导航胶囊（原版结构）
-// =============================================================================
 @Composable
 private fun PortraitBottomNavigator() {
     Box(

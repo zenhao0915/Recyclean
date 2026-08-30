@@ -66,13 +66,11 @@ fun DefaultDataScreen(
     val transactions = viewModel.completedTransactions
 
     if (isLandscape) {
-        // 🔄 Landscape 双列布局 (左侧：收益看板与数据概览，右侧：交易历史明细列表)
         DefaultDataLandscape(
             viewModel = viewModel,
             transactions = transactions
         )
     } else {
-        // 📱 Portrait 经典单列滚动布局
         DefaultDataPortrait(
             viewModel = viewModel,
             transactions = transactions
@@ -80,9 +78,6 @@ fun DefaultDataScreen(
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait 视图
-// =============================================================================
 @Composable
 private fun DefaultDataPortrait(
     viewModel: DefaultDataViewModel,
@@ -111,7 +106,6 @@ private fun DefaultDataPortrait(
             textAlign = TextAlign.Center
         )
 
-        // 顶部环保收益数据看板
         ImpactDashboardCard(
             totalEarnings = viewModel.totalEarnings,
             devicesCount = viewModel.totalDevicesCount,
@@ -160,9 +154,6 @@ private fun DefaultDataPortrait(
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape 视图 (左右分栏，兼容左侧导航栏)
-// =============================================================================
 @Composable
 private fun DefaultDataLandscape(
     viewModel: DefaultDataViewModel,
@@ -174,7 +165,6 @@ private fun DefaultDataLandscape(
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 左列：标题 + 概览卡片
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -205,7 +195,6 @@ private fun DefaultDataLandscape(
             )
         }
 
-        // 右列：已完成订单明细 LazyColumn
         Column(
             modifier = Modifier
                 .weight(1.15f)

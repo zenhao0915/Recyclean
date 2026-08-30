@@ -108,9 +108,6 @@ fun ThirdPartyDataScreen(
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait 视图
-// =============================================================================
 @Composable
 private fun ThirdPartyDataPortraitContent(
     viewModel: ThirdPartyDataViewModel,
@@ -192,9 +189,6 @@ private fun ThirdPartyDataPortraitContent(
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape 视图
-// =============================================================================
 @Composable
 private fun ThirdPartyDataLandscapeContent(
     viewModel: ThirdPartyDataViewModel,
@@ -428,7 +422,6 @@ fun ProcurementTrendChartCard(
                 }
             }
 
-            // 🌟 底部 X 轴：同时展示订单序号 (#1)、交易日期 (28 Jul) 和金额 (RM 420)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -471,9 +464,6 @@ fun ProcurementTrendChartCard(
     }
 }
 
-/**
- * 🌟 商家采购统计看板卡片
- */
 @SuppressLint("DefaultLocale")
 @Composable
 fun MerchantProcurementCard(
@@ -682,7 +672,6 @@ fun MerchantTransactionCard(appointment: Appointment) {
                 )
             }
 
-            // 展开后的零件拆解清单
             AnimatedVisibility(visible = isExpanded) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),

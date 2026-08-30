@@ -129,7 +129,6 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) {
     }
 
     if (isLandscape) {
-        // 🔄 Landscape 左右双栏布局
         AddSellLandscapeContent(
             viewModel = viewModel,
             manualInput = manualInput,
@@ -140,7 +139,6 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) {
             onCameraClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }
         )
     } else {
-        // 📱 Portrait 原版单列滚动布局
         AddSellPortraitContent(
             viewModel = viewModel,
             manualInput = manualInput,
@@ -153,9 +151,6 @@ fun AddSellScreen(viewModel: AddSellViewModel = viewModel()) {
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait 单列视图 (保持你的原版结构)
-// =============================================================================
 @SuppressLint("DefaultLocale")
 @Composable
 private fun AddSellPortraitContent(
@@ -192,7 +187,6 @@ private fun AddSellPortraitContent(
             modifier = Modifier.padding(horizontal = 10.dp)
         )
 
-        // 相机 / 图片预览
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -306,7 +300,6 @@ private fun AddSellPortraitContent(
             }
         }
 
-        // 识别结果卡片
         AnimatedVisibility(visible = appState.showResult) {
             SalvationResultCard(
                 sellerRowScrollState = sellerRowScrollState,
@@ -316,9 +309,6 @@ private fun AddSellPortraitContent(
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape 双列视图 (左侧输入/拍摄，右侧估价结果)
-// =============================================================================
 @Composable
 private fun AddSellLandscapeContent(
     viewModel: AddSellViewModel,
@@ -339,7 +329,6 @@ private fun AddSellLandscapeContent(
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 左列：设备拍照与文字输入
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -478,7 +467,6 @@ private fun AddSellLandscapeContent(
             }
         }
 
-        // 右列：估价拆解明细与回收商指派卡片
         Column(
             modifier = Modifier
                 .weight(1.15f)
@@ -535,9 +523,6 @@ private fun AddSellLandscapeContent(
     }
 }
 
-// =============================================================================
-// 📦 3. 零件估价与回收商指派公共卡片
-// =============================================================================
 @SuppressLint("DefaultLocale")
 @Composable
 private fun SalvationResultCard(

@@ -101,7 +101,6 @@ fun App() {
                     }
             ) {
                 if (isLandscape) {
-                    // 🌟 1. 横屏：左侧放垂直侧边栏，右侧为 100% 展开的页面内容容器
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
@@ -120,7 +119,6 @@ fun App() {
                         }
                     }
                 } else {
-                    // 📱 2. 竖屏：维持原生 Scaffold 底部导航
                     Scaffold(
                         containerColor = Color.White,
                         bottomBar = {

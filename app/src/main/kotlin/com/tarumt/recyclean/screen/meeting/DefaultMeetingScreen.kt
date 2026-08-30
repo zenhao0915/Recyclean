@@ -83,20 +83,16 @@ fun DefaultMeetingScreen(
     val pendingList = appointments.filter { it.status == AppointmentStatus.PENDING }
 
     if (isLandscape) {
-        // 🔄 Landscape 双列布局 (左侧：说明与概览，右侧：预约卡片列表)
         MeetingLandscapeContent(
             viewModel = viewModel,
             pendingAppointments = pendingList
         )
     } else {
-        // 📱 Portrait 经典单列滚动布局
         MeetingPortraitContent(
             viewModel = viewModel,
             pendingAppointments = pendingList
         )
     }
-
-    // 取消预约确认弹窗
     viewModel.selectedAppointmentForCancel?.let { appt ->
         AlertDialog(
             onDismissRequest = { viewModel.closeCancelDialog() },
@@ -140,9 +136,6 @@ fun DefaultMeetingScreen(
     }
 }
 
-// =============================================================================
-// 📱 1. Portrait 视图
-// =============================================================================
 @Composable
 private fun MeetingPortraitContent(
     viewModel: DefaultMeetingViewModel,
@@ -202,9 +195,6 @@ private fun MeetingPortraitContent(
     }
 }
 
-// =============================================================================
-// 🔄 2. Landscape 视图 (左右分栏，适配左侧 Navigator)
-// =============================================================================
 @Composable
 private fun MeetingLandscapeContent(
     viewModel: DefaultMeetingViewModel,
@@ -216,7 +206,6 @@ private fun MeetingLandscapeContent(
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 左列：说明标题与状态统计
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -272,7 +261,6 @@ private fun MeetingLandscapeContent(
             }
         }
 
-        // 右列：预约卡片列表
         Column(
             modifier = Modifier
                 .weight(1.25f)
@@ -325,9 +313,6 @@ private fun MeetingLandscapeContent(
     }
 }
 
-// =============================================================================
-// 📦 3. 支持折叠/展开的预约卡片 (带平滑展开动画)
-// =============================================================================
 @SuppressLint("DefaultLocale")
 @Composable
 fun UserAppointmentCard(
@@ -361,7 +346,6 @@ fun UserAppointmentCard(
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 头部：设备名称 + 状态 Label + 展开/折叠箭头
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -405,7 +389,6 @@ fun UserAppointmentCard(
                 }
             }
 
-            // 商家信息与日期
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Business,
@@ -438,7 +421,6 @@ fun UserAppointmentCard(
                 )
             }
 
-            // 🌟 核心：仅在展开时显示零件拆解清单
             AnimatedVisibility(visible = isExpanded) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -480,7 +462,6 @@ fun UserAppointmentCard(
 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.35f))
 
-            // 底部：总计估值 + 取消按钮
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

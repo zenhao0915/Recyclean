@@ -93,7 +93,6 @@ class ThirdPartyDataViewModel : ViewModel() {
             emptyList()
         } else {
             chronologicalList.mapIndexed { index, appt ->
-                // 🌟 核心适配：解析 "dd/MM/yyyy"（如 "28/07/2026" 提取为 "28/07"）
                 val formattedDate = when {
                     appt.scheduledDate.contains("/") -> {
                         appt.scheduledDate.substringBeforeLast("/").ifBlank { appt.scheduledDate }
